@@ -789,6 +789,107 @@ MCP Sampling allows the server to intelligently sample and analyze log data for 
 [Common patterns and what to look for]
 ```
 
+### `oc_apply`
+Apply YAML manifests to OpenShift cluster with comprehensive error handling and validation for all scenarios.
+
+**Parameters:**
+- `manifest` (optional): YAML manifest content to apply
+- `filename` (optional): Path to YAML file to apply  
+- `url` (optional): URL to YAML manifest to apply
+- `namespace` (optional): Target namespace/project (default: "default")
+- `context` (optional): OpenShift context to use
+- `dryRun` (optional): Validate only, don't apply (default: false)
+- `force` (optional): Force apply, ignore conflicts (default: false)
+- `validate` (optional): Validate resources before applying (default: true)
+- `wait` (optional): Wait for resources to be ready (default: false)
+- `timeout` (optional): Timeout for wait operation (e.g., "60s", "5m")
+- `prune` (optional): Prune resources not in current configuration (default: false)
+- `pruneWhitelist` (optional): Resource types to include in pruning
+- `selector` (optional): Label selector for pruning
+- `recursive` (optional): Process directory recursively (default: false)
+- `kustomize` (optional): Apply kustomization directory (default: false)
+- `serverSideApply` (optional): Use server-side apply (default: false)
+- `fieldManager` (optional): Field manager name for server-side apply
+- `overwrite` (optional): Overwrite existing resources (default: false)
+- `cascade` (optional): Deletion cascade strategy ("background", "foreground", "orphan")
+- `gracePeriod` (optional): Grace period for resource deletion (seconds)
+
+**Enhanced Features:**
+- **Comprehensive Error Analysis**: Categorizes errors (Permission, Conflict, Validation, etc.) with specific solutions
+- **Pre-apply Validation**: Namespace checks, conflict detection, YAML syntax validation
+- **Progress Tracking**: Real-time progress with timestamps and detailed logging
+- **Resource Monitoring**: Tracks applied resources and their readiness status
+- **Wait Functionality**: Monitors resource readiness with configurable timeouts
+- **Conflict Resolution**: Intelligent conflict detection and resolution guidance
+- **Multiple Input Sources**: Support for inline manifests, files, and URLs
+
+**Examples:**
+
+Apply inline manifest:
+```json
+{
+  "name": "oc_apply",
+  "arguments": {
+    "manifest": "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: my-config\ndata:\n  key: value",
+    "namespace": "my-project"
+  }
+}
+```
+
+Apply from file with validation:
+```json
+{
+  "name": "oc_apply",
+  "arguments": {
+    "filename": "/path/to/deployment.yaml",
+    "namespace": "production",
+    "wait": true,
+    "timeout": "300s",
+    "validate": true
+  }
+}
+```
+
+Dry run validation:
+```json
+{
+  "name": "oc_apply",
+  "arguments": {
+    "url": "https://raw.githubusercontent.com/example/repo/main/k8s/app.yaml",
+    "namespace": "staging",
+    "dryRun": true
+  }
+}
+```
+
+Server-side apply with field manager:
+```json
+{
+  "name": "oc_apply",
+  "arguments": {
+    "manifest": "...",
+    "namespace": "production",
+    "serverSideApply": true,
+    "fieldManager": "my-controller",
+    "force": true
+  }
+}
+```
+
+Apply with pruning:
+```json
+{
+  "name": "oc_apply",
+  "arguments": {
+    "filename": "/path/to/app-manifests/",
+    "namespace": "production",
+    "recursive": true,
+    "prune": true,
+    "selector": "app=my-application"
+  }
+}
+```
+
 ### `oc_delete`
 Delete OpenShift resources.
 

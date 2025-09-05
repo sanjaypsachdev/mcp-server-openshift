@@ -49,12 +49,26 @@ export const OcDeleteSchema = z.object({
 });
 
 export const OcApplySchema = z.object({
-  manifest: z.string().optional().describe('YAML manifest to apply'),
+  manifest: z.string().optional().describe('YAML manifest content to apply'),
   filename: z.string().optional().describe('Path to YAML file to apply'),
+  url: z.string().optional().describe('URL to YAML manifest to apply'),
   namespace: NamespaceSchema.describe('OpenShift namespace/project'),
   context: ContextSchema.describe('OpenShift context to use (optional)'),
-  dryRun: z.boolean().optional().default(false).describe('Validate only, don\'t apply'),
-  force: z.boolean().optional().default(false).describe('Force apply')
+  dryRun: z.boolean().optional().default(false).describe('Validate only, don\'t apply (client or server)'),
+  force: z.boolean().optional().default(false).describe('Force apply, ignore conflicts'),
+  validate: z.boolean().optional().default(true).describe('Validate resources before applying'),
+  wait: z.boolean().optional().default(false).describe('Wait for resources to be ready'),
+  timeout: z.string().optional().describe('Timeout for wait operation (e.g., "60s", "5m")'),
+  prune: z.boolean().optional().default(false).describe('Prune resources not in current configuration'),
+  pruneWhitelist: z.array(z.string()).optional().describe('Resource types to include in pruning'),
+  selector: z.string().optional().describe('Label selector for pruning'),
+  recursive: z.boolean().optional().default(false).describe('Process directory recursively'),
+  kustomize: z.boolean().optional().default(false).describe('Apply kustomization directory'),
+  serverSideApply: z.boolean().optional().default(false).describe('Use server-side apply'),
+  fieldManager: z.string().optional().describe('Field manager name for server-side apply'),
+  overwrite: z.boolean().optional().default(false).describe('Overwrite existing resources'),
+  cascade: z.enum(['background', 'foreground', 'orphan']).optional().describe('Deletion cascade strategy'),
+  gracePeriod: z.number().optional().describe('Grace period for resource deletion (seconds)')
 });
 
 export const OcScaleSchema = z.object({
