@@ -27,154 +27,24 @@ A Model Context Protocol (MCP) server that provides tools for managing and inter
 
 ## Dependencies
 
-This project is built on top of several key libraries and frameworks:
-
 ### Core Dependencies
-
-#### **Model Context Protocol SDK**
-- **Package**: `@modelcontextprotocol/sdk`
-- **Version**: `^0.6.0`
-- **Purpose**: Core MCP server framework providing tools, resources, prompts, and sampling capabilities
-- **Features Used**:
-  - Server implementation with multiple transport support
-  - Tool definitions and request handling
-  - Resource management for read-only data access
-  - Prompt templates for interactive guidance
-  - Sampling capabilities for log analysis
-  - STDIO and SSE transport implementations
-
-#### **Zod Schema Validation**
-- **Package**: `zod`
-- **Version**: `^3.23.8`
-- **Purpose**: Runtime type validation and schema definition
-- **Features Used**:
-  - Input parameter validation for all MCP tools
-  - Type-safe schema definitions with descriptions
-  - Runtime validation with error handling
-  - Optional parameter support with defaults
-  - Enum validation for constrained values
+- **`@modelcontextprotocol/sdk`** `^0.6.0` - MCP server framework with tools, resources, prompts, and dual transport support
+- **`zod`** `^3.23.8` - Runtime type validation and schema definition
 
 ### Development Dependencies
-
-#### **TypeScript Ecosystem**
-- **TypeScript**: `^5.5.0` - Type-safe JavaScript development
-- **@types/node**: `^22.0.0` - Node.js type definitions
-- **tsx**: `^4.19.0` - TypeScript execution for development
-
-#### **Code Quality Tools**
-- **ESLint**: `^9.0.0` - Code linting and style enforcement
-- **@typescript-eslint/eslint-plugin**: `^8.0.0` - TypeScript-specific linting rules
-- **@typescript-eslint/parser**: `^8.0.0` - TypeScript parser for ESLint
-
-#### **Testing Framework**
-- **Vitest**: `^2.0.0` - Fast unit testing framework with TypeScript support
-
-### Runtime Dependencies
-
-#### **Node.js Built-in Modules**
-- **child_process**: For executing OpenShift CLI commands
-- **http**: For HTTP/SSE transport server implementation
-- **path**: For file path manipulation
-- **fs**: For file system operations (if needed)
+- **`typescript`** `^5.5.0` - Type-safe JavaScript development
+- **`eslint`** `^9.0.0` - Code linting and quality enforcement
+- **`vitest`** `^2.0.0` - Fast unit testing framework
+- **`tsx`** `^4.19.0` - TypeScript execution for development
 
 ### External Dependencies
+- **OpenShift CLI (`oc`)** - Required for cluster operations. Install via `brew install openshift-cli` or download from OpenShift releases
 
-#### **OpenShift CLI (oc)**
-- **Purpose**: Command-line interface for OpenShift cluster operations
-- **Installation**: `brew install openshift-cli` (macOS) or download from OpenShift releases
-- **Version Compatibility**: Works with OpenShift 4.x and Kubernetes 1.25+
-- **Required For**: All cluster operations and resource management
 
-### Architecture Overview
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    MCP OpenShift Server                     │
-├─────────────────────────────────────────────────────────────┤
-│  MCP SDK (0.6.0)                                          │
-│  ├── Server Framework                                      │
-│  ├── Transport Layer (STDIO/SSE)                          │
-│  ├── Tool/Resource/Prompt Handling                        │
-│  └── Request/Response Management                           │
-├─────────────────────────────────────────────────────────────┤
-│  Zod (3.23.8)                                             │
-│  ├── Schema Validation                                     │
-│  ├── Type Safety                                           │
-│  ├── Runtime Validation                                    │
-│  └── Error Handling                                        │
-├─────────────────────────────────────────────────────────────┤
-│  OpenShift Manager                                         │
-│  ├── CLI Command Execution                                 │
-│  ├── Response Processing                                   │
-│  ├── Error Handling                                        │
-│  └── Context Management                                    │
-├─────────────────────────────────────────────────────────────┤
-│  OpenShift CLI (oc)                                       │
-│  ├── Cluster Operations                                    │
-│  ├── Resource Management                                   │
-│  ├── Build Operations                                      │
-│  └── Authentication                                        │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Compatibility Matrix
-
-| Component | Version | Node.js | OpenShift | Kubernetes |
-|-----------|---------|---------|-----------|------------|
-| MCP SDK | 0.6.0 | ≥18.0.0 | 4.x | 1.25+ |
-| Zod | 3.23.8 | ≥16.0.0 | N/A | N/A |
-| TypeScript | 5.5.0 | ≥18.0.0 | N/A | N/A |
-| OpenShift CLI | Latest | N/A | 4.x | 1.25+ |
-
-### Version Selection Rationale
-
-#### **MCP SDK 0.6.0**
-- **Latest stable release** with full tool, resource, prompt, and sampling support
-- **Transport flexibility** supporting both STDIO and HTTP/SSE modes
-- **Comprehensive API** for all MCP server capabilities
-- **Active development** with regular updates and bug fixes
-
-#### **Zod 3.23.8**
-- **Mature validation library** with excellent TypeScript integration
-- **Performance optimized** for runtime validation scenarios
-- **Comprehensive schema types** supporting complex validation rules
-- **Wide ecosystem adoption** ensuring long-term stability
-
-#### **TypeScript 5.5.0**
-- **Latest stable TypeScript** with modern language features
-- **Excellent tooling support** for development and debugging
-- **Strong type inference** reducing boilerplate code
-- **ES2022 target** for modern JavaScript features
-
-### Security Considerations
-
-- **MCP SDK**: Provides secure transport layer with proper authentication
-- **Zod**: Runtime validation prevents injection and malformed data attacks
-- **OpenShift CLI**: Respects cluster RBAC and user permissions
-- **No Credentials Storage**: Server doesn't store or transmit authentication credentials
-- **Input Validation**: All user inputs validated through Zod schemas
-- **Command Injection Prevention**: Parameterized command execution
-- **CORS Configuration**: Secure cross-origin resource sharing for HTTP transport
-
-### Dependency Management
-
-#### **Production Dependencies (Minimal)**
-The project maintains a minimal production dependency footprint:
-- Only 2 runtime dependencies (MCP SDK + Zod)
-- No unnecessary third-party libraries
-- Lightweight deployment footprint
-- Reduced security attack surface
-
-#### **Development Dependencies (Comprehensive)**
-Rich development experience with modern tooling:
-- TypeScript for type safety and developer experience
-- ESLint for code quality and consistency
-- Vitest for fast unit testing
-- tsx for rapid development iteration
-
-#### **Peer Dependencies**
-- **Node.js 18+**: Required for modern JavaScript features and MCP SDK compatibility
-- **OpenShift CLI**: External dependency for cluster operations
+### Requirements
+- **Node.js**: 18.0.0 or higher
+- **OpenShift CLI**: 4.x compatible
+- **Kubernetes**: 1.25+ compatible
 
 ## Installation
 
