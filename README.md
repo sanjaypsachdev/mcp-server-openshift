@@ -1,4 +1,4 @@
-# MCP Server OpenShift
+# OpenShift MCP Server
 
 A Model Context Protocol (MCP) server that provides tools for managing and interacting with OpenShift clusters. This server enables AI assistants to perform OpenShift operations through the `oc` command-line interface.
 
