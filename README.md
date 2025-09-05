@@ -547,7 +547,10 @@ Docker strategy deployment:
 ```
 
 **Enhanced Output Example:**
-```markdown
+
+The enhanced oc_new_app tool now provides detailed progress tracking and status information:
+
+```
 # 🎉 Application Deployment Successful
 
 ## 📋 Deployment Summary
@@ -565,7 +568,6 @@ Docker strategy deployment:
 - **Available**: 1/1 available
 
 ## 📝 Deployment Progress Log
-```
 [0.1s] INFO: 🚀 Starting application deployment process
 [0.2s] INFO: 📋 Parameters validated successfully
 [0.2s] INFO: 📝 Application name: my-nodejs-app
@@ -591,10 +593,8 @@ Docker strategy deployment:
 [5.8s] SUCCESS: 🎯 Pods: 1/1 running
 [5.9s] INFO: 🔍 Performing final status check...
 [6.2s] SUCCESS: 🎉 Deployment process completed in 6.2s
-```
 
 ## 🔧 Useful Commands
-```bash
 # Check application status
 oc get all -l app=my-nodejs-app -n my-apps
 
@@ -603,7 +603,6 @@ oc logs deployment/my-nodejs-app -n my-apps -f
 
 # Scale application
 oc scale deployment/my-nodejs-app --replicas=3 -n my-apps
-```
 ```
 
 ### `oc_scale`
