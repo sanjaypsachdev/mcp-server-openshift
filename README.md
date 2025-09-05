@@ -11,6 +11,8 @@ A Model Context Protocol (MCP) server that provides tools for managing and inter
 - **Build Operations**: Start and monitor OpenShift builds
 - **Logging**: Retrieve logs from pods, deploymentconfigs, and builds
 - **Multi-Context Support**: Work with multiple OpenShift clusters
+- **Operator Management**: Install operators via OLM, Helm, or direct manifests
+- **Application Deployment**: Deploy applications from Git repositories using S2I builds with automatic route exposure
 
 ## Prerequisites
 
@@ -158,6 +160,68 @@ Install via manifest:
     "namespace": "cert-manager",
     "source": "manifest",
     "manifestUrl": "https://github.com/cert-manager/cert-manager/releases/download/v1.13.0/cert-manager.yaml"
+  }
+}
+```
+
+### `oc_new_app`
+Create a new application from a GitHub repository using S2I build and expose it with an edge-terminated route.
+
+**Parameters:**
+- `gitRepo` (required): GitHub repository URL for the source code
+- `appName` (optional): Name for the application (if not specified, derives from repo name)
+- `namespace` (optional): Target namespace for the application (default: "default")
+- `context` (optional): OpenShift context to use
+- `builderImage` (optional): Builder image for S2I build (e.g., "nodejs:18-ubi8", "python:3.9-ubi8")
+- `env` (optional): Array of environment variables in KEY=VALUE format
+- `labels` (optional): Array of labels in KEY=VALUE format
+- `createNamespace` (optional): Create namespace if it doesn't exist (default: true)
+- `exposeRoute` (optional): Create an edge-terminated route to expose the application (default: true)
+- `routeHostname` (optional): Custom hostname for the route
+- `gitRef` (optional): Git reference (branch, tag, or commit) to build from
+- `contextDir` (optional): Context directory within the Git repository
+- `strategy` (optional): Build strategy - "source" (S2I) or "docker" (default: "source")
+
+**Examples:**
+
+Simple Node.js app deployment:
+```json
+{
+  "name": "oc_new_app",
+  "arguments": {
+    "gitRepo": "https://github.com/sclorg/nodejs-ex.git",
+    "namespace": "my-apps"
+  }
+}
+```
+
+Python app with custom builder image and environment variables:
+```json
+{
+  "name": "oc_new_app",
+  "arguments": {
+    "gitRepo": "https://github.com/sclorg/django-ex.git",
+    "appName": "my-django-app",
+    "namespace": "python-apps",
+    "builderImage": "python:3.9-ubi8",
+    "env": ["DJANGO_SECRET_KEY=mysecret", "DEBUG=False"],
+    "labels": ["app=django", "tier=web"],
+    "routeHostname": "my-django-app.example.com"
+  }
+}
+```
+
+Docker strategy deployment:
+```json
+{
+  "name": "oc_new_app",
+  "arguments": {
+    "gitRepo": "https://github.com/openshift/ruby-hello-world.git",
+    "appName": "ruby-app",
+    "namespace": "ruby-apps",
+    "strategy": "docker",
+    "gitRef": "main",
+    "contextDir": "app"
   }
 }
 ```

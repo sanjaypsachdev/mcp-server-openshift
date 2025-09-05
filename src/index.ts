@@ -11,6 +11,7 @@ import {
 import { ocGetTool, handleOcGet } from './tools/oc-get.js';
 import { ocCreateTool, handleOcCreate } from './tools/oc-create.js';
 import { ocInstallOperatorTool, handleOcInstallOperator } from './tools/oc-install-operator.js';
+import { ocNewAppTool, handleOcNewApp } from './tools/oc-new-app.js';
 import { OpenShiftManager } from './utils/openshift-manager.js';
 
 class OpenShiftMCPServer {
@@ -43,6 +44,7 @@ class OpenShiftMCPServer {
           ocGetTool,
           ocCreateTool,
           ocInstallOperatorTool,
+          ocNewAppTool,
           // Add more tools here as they are implemented
         ],
       };
@@ -62,6 +64,9 @@ class OpenShiftMCPServer {
 
           case 'oc_install_operator':
             return await handleOcInstallOperator(args as any);
+
+          case 'oc_new_app':
+            return await handleOcNewApp(args as any);
 
           default:
             throw new Error(`Unknown tool: ${name}`);

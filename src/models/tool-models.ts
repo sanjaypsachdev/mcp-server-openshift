@@ -119,6 +119,22 @@ export const OcInstallOperatorSchema = z.object({
   installPlanApproval: z.enum(['Automatic', 'Manual']).optional().default('Automatic').describe('Install plan approval strategy for OLM')
 });
 
+export const OcNewAppSchema = z.object({
+  gitRepo: z.string().url().describe('GitHub repository URL for the source code'),
+  appName: z.string().optional().describe('Name for the application (if not specified, derives from repo name)'),
+  namespace: NamespaceSchema.describe('Target namespace for the application'),
+  context: ContextSchema.describe('OpenShift context to use (optional)'),
+  builderImage: z.string().optional().describe('Builder image for S2I build (e.g., "nodejs:18-ubi8", "python:3.9-ubi8")'),
+  env: z.array(z.string()).optional().describe('Environment variables in KEY=VALUE format'),
+  labels: z.array(z.string()).optional().describe('Labels in KEY=VALUE format'),
+  createNamespace: z.boolean().optional().default(true).describe('Create namespace if it does not exist'),
+  exposeRoute: z.boolean().optional().default(true).describe('Create an edge-terminated route to expose the application'),
+  routeHostname: z.string().optional().describe('Custom hostname for the route (if not specified, uses default)'),
+  gitRef: z.string().optional().describe('Git reference (branch, tag, or commit) to build from (default: main/master)'),
+  contextDir: z.string().optional().describe('Context directory within the Git repository'),
+  strategy: z.enum(['source', 'docker']).optional().default('source').describe('Build strategy: source (S2I) or docker')
+});
+
 // Type exports
 export type OcGetParams = z.infer<typeof OcGetSchema>;
 export type OcCreateParams = z.infer<typeof OcCreateSchema>;
@@ -130,3 +146,4 @@ export type OcRolloutParams = z.infer<typeof OcRolloutSchema>;
 export type OcStartBuildParams = z.infer<typeof OcStartBuildSchema>;
 export type OcExposeParams = z.infer<typeof OcExposeSchema>;
 export type OcInstallOperatorParams = z.infer<typeof OcInstallOperatorSchema>;
+export type OcNewAppParams = z.infer<typeof OcNewAppSchema>;
