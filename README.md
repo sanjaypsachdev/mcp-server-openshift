@@ -700,6 +700,36 @@ Arguments:
 
 The prompt generates a comprehensive, step-by-step troubleshooting guide customized for the specific pod and symptoms.
 
+### `monitoring-prompts`
+**Name**: `monitoring-prompts`
+**Description**: Comprehensive monitoring and observability guidance for OpenShift clusters covering metrics, logging, alerting, and performance analysis.
+
+**Arguments:**
+- `scenario` (required): Monitoring scenario - "cluster", "application", "performance", "troubleshooting", "capacity", "security"
+- `target` (optional): Target to monitor (pod, deployment, service, node, namespace, or cluster-wide)
+- `namespace` (optional): Namespace/project to focus monitoring on
+- `timeRange` (optional): Time range for monitoring (1h, 6h, 24h, 7d)
+
+**Coverage**: This prompt provides monitoring guidance for:
+- **Cluster Monitoring**: Node health, resource utilization, operator status, etcd performance
+- **Application Monitoring**: Performance metrics, scaling behavior, custom dashboards
+- **Performance Analysis**: Resource optimization, bottleneck identification, capacity planning
+- **Security Monitoring**: RBAC compliance, network policies, vulnerability scanning
+- **Troubleshooting**: Monitoring stack issues, missing metrics, alert configuration
+- **Capacity Planning**: Resource trends, growth analysis, scaling recommendations
+
+**Example Usage**:
+```
+Use prompt: monitoring-prompts
+Arguments:
+- scenario: "application"
+- target: "my-webapp"
+- namespace: "production"
+- timeRange: "24h"
+```
+
+The prompt generates customized monitoring setup and analysis guidance based on the specific scenario and requirements.
+
 ## Available Sampling
 
 MCP Sampling allows the server to intelligently sample and analyze log data for troubleshooting and monitoring.

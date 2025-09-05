@@ -29,6 +29,7 @@ import { appTemplatesResource, getAppTemplates } from './resources/app-templates
 
 // Import prompts
 import { troubleshootPodPrompt, generateTroubleshootPodPrompt } from './prompts/troubleshoot-pod.js';
+import { monitoringPromptsPrompt, generateMonitoringPrompts } from './prompts/monitoring-prompts.js';
 
 // Import sampling
 import { samplePodLogs, type PodLogsSamplingRequest } from './sampling/pod-logs.js';
@@ -198,6 +199,7 @@ class OpenShiftMCPServer {
       return {
         prompts: [
           troubleshootPodPrompt,
+          monitoringPromptsPrompt,
           // Add more prompts here as they are implemented
         ],
       };
@@ -210,7 +212,7 @@ class OpenShiftMCPServer {
       try {
         switch (name) {
           case 'troubleshoot-pod-prompt':
-            const promptText = generateTroubleshootPodPrompt({
+            const troubleshootPromptText = generateTroubleshootPodPrompt({
               podName: args?.podName || 'UNKNOWN_POD',
               namespace: args?.namespace || 'UNKNOWN_NAMESPACE',
               symptoms: args?.symptoms,
@@ -223,7 +225,27 @@ class OpenShiftMCPServer {
                   role: 'user' as const,
                   content: {
                     type: 'text' as const,
-                    text: promptText,
+                    text: troubleshootPromptText,
+                  },
+                },
+              ],
+            };
+
+          case 'monitoring-prompts':
+            const monitoringPromptText = generateMonitoringPrompts({
+              scenario: args?.scenario || 'cluster',
+              target: args?.target,
+              namespace: args?.namespace,
+              timeRange: args?.timeRange
+            });
+            return {
+              description: `Monitoring guidance for ${args?.scenario || 'cluster'} scenario`,
+              messages: [
+                {
+                  role: 'user' as const,
+                  content: {
+                    type: 'text' as const,
+                    text: monitoringPromptText,
                   },
                 },
               ],
