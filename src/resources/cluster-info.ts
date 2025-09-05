@@ -13,22 +13,42 @@ export async function getClusterInfo(context?: string): Promise<string> {
   const clusterInfo: any = {};
   
   try {
-    // Get cluster version information
-    const versionResult = await manager.executeCommand(['version'], { context });
+    // Get cluster version information with JSON output
+    const versionResult = await manager.executeCommand(['version', '-o', 'json'], { context });
     if (versionResult.success) {
       try {
-        const versionData = JSON.parse(versionResult.data);
+        const versionData = typeof versionResult.data === 'string' ? JSON.parse(versionResult.data) : versionResult.data;
         clusterInfo.version = {
-          client: versionData.clientVersion || 'Unknown',
-          server: versionData.serverVersion || 'Unknown',
-          kubernetes: versionData.serverVersion?.kubernetes || 'Unknown'
+          client: versionData.clientVersion?.gitVersion || 'Unknown',
+          server: versionData.openshiftVersion || versionData.serverVersion?.gitVersion || 'Unknown',
+          kubernetes: versionData.serverVersion?.gitVersion || 'Unknown',
+          clientDetails: {
+            version: versionData.clientVersion?.gitVersion || 'Unknown',
+            gitCommit: versionData.clientVersion?.gitCommit || 'Unknown',
+            buildDate: versionData.clientVersion?.buildDate || 'Unknown',
+            platform: versionData.clientVersion?.platform || 'Unknown'
+          },
+          serverDetails: {
+            openshiftVersion: versionData.openshiftVersion || 'Unknown',
+            kubernetesVersion: versionData.serverVersion?.gitVersion || 'Unknown',
+            gitCommit: versionData.serverVersion?.gitCommit || 'Unknown',
+            buildDate: versionData.serverVersion?.buildDate || 'Unknown',
+            platform: versionData.serverVersion?.platform || 'Unknown'
+          },
+          kustomizeVersion: versionData.kustomizeVersion || 'Unknown'
         };
-      } catch {
-        // Fallback for non-JSON version output
+      } catch (parseError) {
+        // Fallback: try text version command
+        const textVersionResult = await manager.executeCommand(['version'], { context });
         clusterInfo.version = {
-          raw: versionResult.data
+          raw: textVersionResult.success ? textVersionResult.data : 'Failed to get version',
+          error: `JSON parse failed: ${parseError instanceof Error ? parseError.message : String(parseError)}`
         };
       }
+    } else {
+      clusterInfo.version = {
+        error: `Version command failed: ${versionResult.error}`
+      };
     }
     
     // Get cluster info
@@ -134,11 +154,18 @@ export async function getClusterInfo(context?: string): Promise<string> {
       };
     }
     
-    // Add metadata
+    // Add metadata with debug information
     clusterInfo.metadata = {
       retrievedAt: new Date().toISOString(),
       context: context || 'current',
-      serverType: 'OpenShift/Kubernetes'
+      serverType: 'OpenShift/Kubernetes',
+      debug: {
+        versionCommandExecuted: !!clusterInfo.version,
+        nodesCommandExecuted: !!clusterInfo.nodes,
+        namespacesCommandExecuted: !!clusterInfo.namespaces,
+        storageCommandExecuted: !!clusterInfo.storage,
+        eventsCommandExecuted: !!clusterInfo.recentEvents
+      }
     };
     
     return JSON.stringify(clusterInfo, null, 2);
@@ -147,7 +174,8 @@ export async function getClusterInfo(context?: string): Promise<string> {
     const errorInfo = {
       error: 'Failed to retrieve cluster information',
       message: error instanceof Error ? error.message : String(error),
-      retrievedAt: new Date().toISOString()
+      retrievedAt: new Date().toISOString(),
+      stack: error instanceof Error ? error.stack : undefined
     };
     return JSON.stringify(errorInfo, null, 2);
   }
