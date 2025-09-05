@@ -40,14 +40,18 @@ npm install -g mcp-server-openshift
 
 ## Configuration
 
-Add the server to your MCP client configuration:
+Add the server to your MCP client configuration. Choose the configuration that matches your client:
+
+### Claude Desktop
+
+Add to your Claude Desktop configuration file (`~/.claude/mcp.json` on macOS/Linux or `%APPDATA%\Claude\mcp.json` on Windows):
 
 ```json
 {
-  "servers": {
+  "mcpServers": {
     "openshift": {
-      "command": "mcp-server-openshift",
-      "args": [],
+      "command": "node",
+      "args": ["/path/to/mcp-server-openshift/dist/index.js"],
       "env": {
         "OPENSHIFT_CONTEXT": "your-context-name",
         "OPENSHIFT_NAMESPACE": "your-default-namespace"
@@ -56,6 +60,70 @@ Add the server to your MCP client configuration:
   }
 }
 ```
+
+### Cursor
+
+Add to your Cursor MCP configuration file (`~/.cursor/mcp.json`):
+
+```json
+{
+  "mcpServers": {
+    "openshift": {
+      "command": "node",
+      "args": ["/path/to/mcp-server-openshift/dist/index.js"],
+      "env": {
+        "OPENSHIFT_CONTEXT": "your-context-name",
+        "OPENSHIFT_NAMESPACE": "your-default-namespace"
+      }
+    }
+  }
+}
+```
+
+### Visual Studio Code
+
+For VS Code with MCP extensions, add to your VS Code settings (`settings.json`):
+
+```json
+{
+  "mcp.servers": {
+    "openshift": {
+      "command": "node",
+      "args": ["/path/to/mcp-server-openshift/dist/index.js"],
+      "env": {
+        "OPENSHIFT_CONTEXT": "your-context-name",
+        "OPENSHIFT_NAMESPACE": "your-default-namespace"
+      }
+    }
+  }
+}
+```
+
+### Generic MCP Client
+
+For other MCP clients, use this standard configuration:
+
+```json
+{
+  "servers": {
+    "openshift": {
+      "command": "node",
+      "args": ["/path/to/mcp-server-openshift/dist/index.js"],
+      "env": {
+        "OPENSHIFT_CONTEXT": "your-context-name",
+        "OPENSHIFT_NAMESPACE": "your-default-namespace"
+      }
+    }
+  }
+}
+```
+
+### Configuration Notes
+
+- **Path**: Replace `/path/to/mcp-server-openshift/dist/index.js` with the actual absolute path to your built server
+- **Context**: Set `OPENSHIFT_CONTEXT` to your OpenShift cluster context name, or leave empty to use the current context
+- **Namespace**: Set `OPENSHIFT_NAMESPACE` to your default project/namespace, or use "default"
+- **Restart**: After adding the configuration, restart your MCP client to load the server
 
 ## Available Tools
 
