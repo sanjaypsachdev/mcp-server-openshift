@@ -1,0 +1,132 @@
+import { z } from 'zod';
+
+// Common parameter schemas
+export const NamespaceSchema = z.string().optional().default('default');
+export const ContextSchema = z.string().optional().default('');
+export const OutputFormatSchema = z.enum(['json', 'yaml', 'wide', 'name']).optional().default('json');
+
+// OpenShift CLI tool schemas
+export const OcGetSchema = z.object({
+  resourceType: z.string().describe('Type of resource to get (e.g., pods, deploymentconfigs, routes, projects)'),
+  name: z.string().optional().describe('Name of the resource (optional - if not provided, lists all resources)'),
+  namespace: NamespaceSchema.describe('OpenShift namespace/project'),
+  context: ContextSchema.describe('OpenShift context to use (optional)'),
+  output: OutputFormatSchema.describe('Output format'),
+  allNamespaces: z.boolean().optional().default(false).describe('List resources across all namespaces'),
+  labelSelector: z.string().optional().describe('Filter resources by label selector'),
+  fieldSelector: z.string().optional().describe('Filter resources by field selector')
+});
+
+export const OcCreateSchema = z.object({
+  resourceType: z.string().optional().describe('Type of resource to create'),
+  name: z.string().optional().describe('Name of the resource'),
+  namespace: NamespaceSchema.describe('OpenShift namespace/project'),
+  context: ContextSchema.describe('OpenShift context to use (optional)'),
+  manifest: z.string().optional().describe('YAML manifest to create resources from'),
+  filename: z.string().optional().describe('Path to YAML file to create resources from'),
+  dryRun: z.boolean().optional().default(false).describe('Validate only, don\'t create'),
+  // DeploymentConfig specific
+  image: z.string().optional().describe('Container image for deploymentconfig'),
+  replicas: z.number().optional().default(1).describe('Number of replicas'),
+  // Route specific
+  service: z.string().optional().describe('Service name for route'),
+  hostname: z.string().optional().describe('Hostname for route'),
+  // Project specific
+  displayName: z.string().optional().describe('Display name for project'),
+  description: z.string().optional().describe('Description for project')
+});
+
+export const OcDeleteSchema = z.object({
+  resourceType: z.string().describe('Type of resource to delete'),
+  name: z.string().optional().describe('Name of the resource'),
+  namespace: NamespaceSchema.describe('OpenShift namespace/project'),
+  context: ContextSchema.describe('OpenShift context to use (optional)'),
+  manifest: z.string().optional().describe('YAML manifest defining resources to delete'),
+  filename: z.string().optional().describe('Path to YAML file to delete resources from'),
+  labelSelector: z.string().optional().describe('Delete resources matching label selector'),
+  force: z.boolean().optional().default(false).describe('Force deletion'),
+  gracePeriodSeconds: z.number().optional().describe('Grace period for deletion')
+});
+
+export const OcApplySchema = z.object({
+  manifest: z.string().optional().describe('YAML manifest to apply'),
+  filename: z.string().optional().describe('Path to YAML file to apply'),
+  namespace: NamespaceSchema.describe('OpenShift namespace/project'),
+  context: ContextSchema.describe('OpenShift context to use (optional)'),
+  dryRun: z.boolean().optional().default(false).describe('Validate only, don\'t apply'),
+  force: z.boolean().optional().default(false).describe('Force apply')
+});
+
+export const OcScaleSchema = z.object({
+  resourceType: z.string().default('deploymentconfig').describe('Resource type to scale'),
+  name: z.string().describe('Name of the resource to scale'),
+  replicas: z.number().describe('Number of replicas to scale to'),
+  namespace: NamespaceSchema.describe('OpenShift namespace/project'),
+  context: ContextSchema.describe('OpenShift context to use (optional)')
+});
+
+export const OcLogsSchema = z.object({
+  resourceType: z.enum(['pod', 'deploymentconfig', 'build']).describe('Type of resource to get logs from'),
+  name: z.string().describe('Name of the resource'),
+  namespace: NamespaceSchema.describe('OpenShift namespace/project'),
+  context: ContextSchema.describe('OpenShift context to use (optional)'),
+  container: z.string().optional().describe('Container name (for pods with multiple containers)'),
+  follow: z.boolean().optional().default(false).describe('Follow logs output'),
+  previous: z.boolean().optional().default(false).describe('Show logs from previous container'),
+  since: z.string().optional().describe('Show logs since relative time (e.g. 5s, 2m, 3h)'),
+  tail: z.number().optional().describe('Number of lines to show from end of logs'),
+  timestamps: z.boolean().optional().default(false).describe('Include timestamps')
+});
+
+export const OcRolloutSchema = z.object({
+  subCommand: z.enum(['status', 'history', 'undo', 'latest', 'cancel']).describe('Rollout subcommand'),
+  resourceType: z.string().default('deploymentconfig').describe('Resource type'),
+  name: z.string().describe('Name of the resource'),
+  namespace: NamespaceSchema.describe('OpenShift namespace/project'),
+  context: ContextSchema.describe('OpenShift context to use (optional)'),
+  revision: z.number().optional().describe('Revision number (for undo)'),
+  watch: z.boolean().optional().default(false).describe('Watch rollout status')
+});
+
+export const OcStartBuildSchema = z.object({
+  buildconfig: z.string().describe('Name of the BuildConfig'),
+  namespace: NamespaceSchema.describe('OpenShift namespace/project'),
+  context: ContextSchema.describe('OpenShift context to use (optional)'),
+  wait: z.boolean().optional().default(false).describe('Wait for build completion'),
+  follow: z.boolean().optional().default(false).describe('Follow build logs')
+});
+
+export const OcExposeSchema = z.object({
+  resourceType: z.string().describe('Resource type to expose (service, deploymentconfig)'),
+  name: z.string().describe('Name of the resource to expose'),
+  namespace: NamespaceSchema.describe('OpenShift namespace/project'),
+  context: ContextSchema.describe('OpenShift context to use (optional)'),
+  hostname: z.string().optional().describe('Hostname for the route'),
+  port: z.string().optional().describe('Port to expose'),
+  path: z.string().optional().describe('Path for the route')
+});
+
+export const OcInstallOperatorSchema = z.object({
+  operatorName: z.string().describe('Name of the operator to install (e.g., "prometheus-operator", "cert-manager")'),
+  version: z.string().optional().describe('Version of the operator to install (if not specified, installs latest available)'),
+  namespace: NamespaceSchema.describe('Target namespace for operator installation'),
+  context: ContextSchema.describe('OpenShift context to use (optional)'),
+  channel: z.string().optional().describe('Update channel for the operator (stable, alpha, beta, etc.)'),
+  source: z.enum(['olm', 'helm', 'manifest']).optional().default('olm').describe('Installation method: olm (Operator Lifecycle Manager), helm (Helm chart), or manifest (direct YAML)'),
+  helmRepo: z.string().optional().describe('Helm repository URL (required if source is helm)'),
+  manifestUrl: z.string().optional().describe('URL to operator manifest (required if source is manifest)'),
+  createNamespace: z.boolean().optional().default(true).describe('Create namespace if it does not exist'),
+  installPlanApproval: z.enum(['Automatic', 'Manual']).optional().default('Automatic').describe('Install plan approval strategy for OLM')
+});
+
+// Type exports
+export type OcGetParams = z.infer<typeof OcGetSchema>;
+export type OcCreateParams = z.infer<typeof OcCreateSchema>;
+export type OcDeleteParams = z.infer<typeof OcDeleteSchema>;
+export type OcApplyParams = z.infer<typeof OcApplySchema>;
+export type OcScaleParams = z.infer<typeof OcScaleSchema>;
+export type OcLogsParams = z.infer<typeof OcLogsSchema>;
+export type OcRolloutParams = z.infer<typeof OcRolloutSchema>;
+export type OcStartBuildParams = z.infer<typeof OcStartBuildSchema>;
+export type OcExposeParams = z.infer<typeof OcExposeSchema>;
+export type OcInstallOperatorParams = z.infer<typeof OcInstallOperatorSchema>;

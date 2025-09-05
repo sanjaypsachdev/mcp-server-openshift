@@ -1,0 +1,105 @@
+{
+  "name": "mcp-server-openshift",
+  "version": "1.0.0",
+  "description": "MCP server for OpenShift operations and management",
+  "author": "MCP OpenShift Server",
+  "license": "MIT",
+  "homepage": "https://github.com/your-org/mcp-server-openshift",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/mcp-server-openshift.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/mcp-server-openshift/issues"
+  },
+  "keywords": [
+    "mcp",
+    "openshift",
+    "kubernetes",
+    "container",
+    "orchestration",
+    "devops",
+    "red-hat"
+  ],
+  "categories": [
+    "development",
+    "infrastructure",
+    "containers"
+  ],
+  "capabilities": {
+    "tools": [
+      {
+        "name": "oc_get",
+        "description": "Get OpenShift resources like pods, deploymentconfigs, routes, projects"
+      },
+      {
+        "name": "oc_create", 
+        "description": "Create OpenShift resources like projects, deploymentconfigs, routes"
+      },
+      {
+        "name": "oc_delete",
+        "description": "Delete OpenShift resources"
+      },
+      {
+        "name": "oc_apply",
+        "description": "Apply OpenShift manifests"
+      },
+      {
+        "name": "oc_scale",
+        "description": "Scale OpenShift deploymentconfigs"
+      },
+      {
+        "name": "oc_logs",
+        "description": "Get logs from OpenShift resources"
+      },
+      {
+        "name": "oc_rollout",
+        "description": "Manage rollouts of OpenShift deploymentconfigs"
+      },
+      {
+        "name": "oc_start_build",
+        "description": "Start OpenShift builds"
+      },
+      {
+        "name": "oc_expose",
+        "description": "Expose OpenShift services as routes"
+      }
+    ]
+  },
+  "requirements": {
+    "openshift": {
+      "cli": "oc",
+      "version": ">=4.0.0",
+      "description": "OpenShift CLI tool must be installed and configured"
+    }
+  },
+  "configuration": {
+    "properties": {
+      "context": {
+        "type": "string",
+        "description": "Default OpenShift context to use",
+        "default": ""
+      },
+      "namespace": {
+        "type": "string", 
+        "description": "Default namespace/project to use",
+        "default": "default"
+      },
+      "timeout": {
+        "type": "number",
+        "description": "Default timeout for commands in milliseconds",
+        "default": 30000
+      }
+    }
+  },
+  "main": "dist/index.js",
+  "bin": {
+    "mcp-server-openshift": "dist/index.js"
+  },
+  "files": [
+    "dist/**/*",
+    "manifest.json",
+    "README.md",
+    "LICENSE"
+  ]
+}
