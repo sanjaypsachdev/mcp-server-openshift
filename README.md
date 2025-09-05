@@ -239,7 +239,7 @@ Install via manifest:
 ```
 
 ### `oc_new_app`
-Create a new application from a GitHub repository using S2I build and expose it with an edge-terminated route.
+Create a new application from a GitHub repository using S2I build and expose it with an edge-terminated route. Includes comprehensive logging, progress tracking, and deployment monitoring.
 
 **Parameters:**
 - `gitRepo` (required): GitHub repository URL for the source code
@@ -255,6 +255,15 @@ Create a new application from a GitHub repository using S2I build and expose it 
 - `gitRef` (optional): Git reference (branch, tag, or commit) to build from
 - `contextDir` (optional): Context directory within the Git repository
 - `strategy` (optional): Build strategy - "source" (S2I) or "docker" (default: "source")
+
+**Enhanced Features:**
+- **Progress Logging**: Real-time progress tracking with timestamps and elapsed time
+- **Build Monitoring**: Automatic build status monitoring and progress updates
+- **Deployment Tracking**: Pod and deployment readiness monitoring
+- **Route Validation**: Route creation verification and URL extraction
+- **Error Handling**: Comprehensive error reporting with troubleshooting guidance
+- **Final Status**: Complete application status summary with useful commands
+- **Performance Metrics**: Deployment timing and performance tracking
 
 **Examples:**
 
@@ -298,6 +307,66 @@ Docker strategy deployment:
     "contextDir": "app"
   }
 }
+```
+
+**Enhanced Output Example:**
+```markdown
+# 🎉 Application Deployment Successful
+
+## 📋 Deployment Summary
+- **Application**: my-nodejs-app
+- **Namespace**: my-apps
+- **Source**: https://github.com/sclorg/nodejs-ex.git
+- **Build Strategy**: source
+- **Route**: Created
+
+## 🌐 Access Information
+- **URL**: https://my-nodejs-app-route-my-apps.apps.cluster.example.com
+
+## 📊 Final Status
+- **Replicas**: 1/1 ready
+- **Available**: 1/1 available
+
+## 📝 Deployment Progress Log
+```
+[0.1s] INFO: 🚀 Starting application deployment process
+[0.2s] INFO: 📋 Parameters validated successfully
+[0.2s] INFO: 📝 Application name: my-nodejs-app
+[0.3s] INFO: 📂 Target namespace: my-apps
+[0.3s] INFO: 🔗 Source repository: https://github.com/sclorg/nodejs-ex.git
+[0.4s] INFO: ⚙️  Build strategy: source
+[0.5s] INFO: 🏗️  Checking/creating namespace: my-apps
+[1.2s] SUCCESS: ✅ Namespace ready: my-apps
+[1.3s] INFO: 🔨 Executing oc new-app command...
+[3.8s] SUCCESS: ✅ Application resources created successfully
+[3.9s] INFO: 📦 Resources: ImageStream, BuildConfig, Deployment, Service
+[4.0s] INFO: 👀 Monitoring build progress...
+[4.2s] SUCCESS: 🔨 Build initiated: Found 1 build(s)
+[4.5s] INFO: 🔄 Build in progress: my-nodejs-app-1
+[4.6s] INFO: 📝 Monitor build: oc logs -f build/my-nodejs-app-1 -n my-apps
+[4.7s] INFO: 🌐 Creating edge-terminated route...
+[5.1s] SUCCESS: ✅ Route created successfully
+[5.2s] SUCCESS: 🔗 Application URL: https://my-nodejs-app-route-my-apps.apps.cluster.example.com
+[5.3s] INFO: 🚀 Monitoring deployment progress...
+[5.5s] INFO: 📊 Deployment status: 1/1 ready, 1/1 available
+[5.6s] SUCCESS: ✅ Deployment fully ready and available
+[5.7s] SUCCESS: ✅ Deployment available: MinimumReplicasAvailable
+[5.8s] SUCCESS: 🎯 Pods: 1/1 running
+[5.9s] INFO: 🔍 Performing final status check...
+[6.2s] SUCCESS: 🎉 Deployment process completed in 6.2s
+```
+
+## 🔧 Useful Commands
+```bash
+# Check application status
+oc get all -l app=my-nodejs-app -n my-apps
+
+# View application logs
+oc logs deployment/my-nodejs-app -n my-apps -f
+
+# Scale application
+oc scale deployment/my-nodejs-app --replicas=3 -n my-apps
+```
 ```
 
 ### `oc_scale`
