@@ -93,7 +93,8 @@ For VS Code with MCP extensions, add to your VS Code settings (`settings.json`):
       "env": {
         "OPENSHIFT_CONTEXT": "your-context-name",
         "OPENSHIFT_NAMESPACE": "your-default-namespace"
-      }
+      },
+      "description": "Openshift cluster management and operations"
     }
   }
 }
