@@ -439,6 +439,56 @@ MCP Resources provide read-only access to cluster information and configuration 
 **Example Usage**: 
 MCP clients can access this resource to get comprehensive cluster status without needing to make multiple tool calls.
 
+### `project-list`
+**URI**: `openshift://project-list`
+**Description**: Comprehensive list of all projects/namespaces with detailed information, quotas, and usage statistics.
+
+**Content**: JSON format containing:
+- **Summary**: Total, system, user, active, and terminating project counts
+- **System Projects**: Core OpenShift and Kubernetes system namespaces with descriptions
+- **User Projects**: Detailed information for user-created projects including:
+  - Resource quotas and limit ranges
+  - Pod counts by status (running, pending, failed, succeeded)
+  - Service, deployment, and route counts
+  - ConfigMap and Secret counts
+  - Labels and annotations
+  - Creation timestamps and status
+- **Cluster Resource Usage**: Cluster-wide resource utilization and pod distribution
+
+**Use Cases**:
+- Project management and organization
+- Resource usage monitoring and planning
+- Quota analysis and capacity planning
+- Security and compliance auditing
+- Multi-tenancy management
+
+### `app-templates`
+**URI**: `openshift://app-templates`
+**Description**: Comprehensive collection of application deployment templates for common OpenShift scenarios and frameworks.
+
+**Content**: JSON format containing:
+- **Web Applications**: Node.js, Python, Java, .NET, PHP, Ruby templates with S2I examples
+- **Databases**: PostgreSQL, MySQL, MongoDB, Redis deployment templates
+- **Messaging**: Kafka, RabbitMQ, and message broker configurations
+- **Monitoring**: Prometheus, Grafana, and observability stack templates
+- **CI/CD**: Jenkins, Tekton Pipelines, and automation templates
+- **Microservices**: Service mesh, API gateway, and distributed system patterns
+- **Big Data**: Spark, Elasticsearch, and analytics platform templates
+- **Security**: Vault, Cert Manager, and security tooling templates
+- **Builder Images**: Available S2I builder images with language detection
+- **Deployment Patterns**: Blue-Green, Canary, Rolling Update strategies
+- **Route Templates**: Edge, Passthrough, Re-encrypt TLS configurations
+- **Storage Templates**: PVC patterns for different access modes
+- **Networking Templates**: Network policies and service monitoring
+
+**Use Cases**:
+- Application deployment guidance
+- Technology stack selection
+- Best practices implementation
+- Template-based rapid deployment
+- Architecture pattern selection
+- Security and compliance templates
+
 ## Available Prompts
 
 MCP Prompts provide interactive troubleshooting and operational guidance templates.

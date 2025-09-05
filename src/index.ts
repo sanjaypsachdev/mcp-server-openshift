@@ -23,6 +23,8 @@ import { OpenShiftManager } from './utils/openshift-manager.js';
 
 // Import resources
 import { clusterInfoResource, getClusterInfo } from './resources/cluster-info.js';
+import { projectListResource, getProjectList } from './resources/project-list.js';
+import { appTemplatesResource, getAppTemplates } from './resources/app-templates.js';
 
 // Import prompts
 import { troubleshootPodPrompt, generateTroubleshootPodPrompt } from './prompts/troubleshoot-pod.js';
@@ -122,6 +124,8 @@ class OpenShiftMCPServer {
       return {
         resources: [
           clusterInfoResource,
+          projectListResource,
+          appTemplatesResource,
           // Add more resources here as they are implemented
         ],
       };
@@ -141,6 +145,30 @@ class OpenShiftMCPServer {
                   uri,
                   mimeType: 'application/json',
                   text: clusterData,
+                },
+              ],
+            };
+
+          case 'openshift://project-list':
+            const projectData = await getProjectList();
+            return {
+              contents: [
+                {
+                  uri,
+                  mimeType: 'application/json',
+                  text: projectData,
+                },
+              ],
+            };
+
+          case 'openshift://app-templates':
+            const templatesData = await getAppTemplates();
+            return {
+              contents: [
+                {
+                  uri,
+                  mimeType: 'application/json',
+                  text: templatesData,
                 },
               ],
             };
