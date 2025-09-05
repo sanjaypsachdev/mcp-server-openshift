@@ -5,6 +5,8 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
+  ListResourcesRequestSchema,
+  ReadResourceRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 
 // Import tools
@@ -15,6 +17,9 @@ import { ocNewAppTool, handleOcNewApp } from './tools/oc-new-app.js';
 import { ocScaleTool, handleOcScale } from './tools/oc-scale.js';
 import { ocDescribeTool, handleOcDescribe } from './tools/oc-describe.js';
 import { OpenShiftManager } from './utils/openshift-manager.js';
+
+// Import resources
+import { clusterInfoResource, getClusterInfo } from './resources/cluster-info.js';
 
 class OpenShiftMCPServer {
   private server: Server;
@@ -29,12 +34,14 @@ class OpenShiftMCPServer {
       {
         capabilities: {
           tools: {},
+          resources: {},
         },
       }
     );
 
     this.openShiftManager = OpenShiftManager.getInstance();
     this.setupToolHandlers();
+    this.setupResourceHandlers();
     this.setupErrorHandling();
   }
 
@@ -91,6 +98,53 @@ class OpenShiftMCPServer {
             },
           ],
           isError: true,
+        };
+      }
+    });
+  }
+
+  private setupResourceHandlers() {
+    // List available resources
+    this.server.setRequestHandler(ListResourcesRequestSchema, async () => {
+      return {
+        resources: [
+          clusterInfoResource,
+          // Add more resources here as they are implemented
+        ],
+      };
+    });
+
+    // Handle resource reads
+    this.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+      const { uri } = request.params;
+
+      try {
+        switch (uri) {
+          case 'openshift://cluster-info':
+            const clusterData = await getClusterInfo();
+            return {
+              contents: [
+                {
+                  uri,
+                  mimeType: 'application/json',
+                  text: clusterData,
+                },
+              ],
+            };
+
+          default:
+            throw new Error(`Unknown resource: ${uri}`);
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return {
+          contents: [
+            {
+              uri,
+              mimeType: 'text/plain',
+              text: `Error reading resource ${uri}: ${errorMessage}`,
+            },
+          ],
         };
       }
     });

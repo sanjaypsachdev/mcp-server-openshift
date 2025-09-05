@@ -15,6 +15,7 @@ A Model Context Protocol (MCP) server that provides tools for managing and inter
 - **Application Deployment**: Deploy applications from Git repositories using S2I builds with automatic route exposure
 - **Scaling Operations**: Scale deployments, deploymentconfigs, replicasets, and statefulsets
 - **Resource Description**: Describe any resource with multiple output formats including human-readable summaries
+- **Cluster Information**: Access comprehensive cluster status, nodes, and configuration via MCP resources
 
 ## Prerequisites
 
@@ -415,6 +416,26 @@ Get route information in JSON format:
   }
 }
 ```
+
+## Available Resources
+
+MCP Resources provide read-only access to cluster information and configuration data.
+
+### `cluster-info`
+**URI**: `openshift://cluster-info`
+**Description**: Comprehensive information about the OpenShift cluster including version, nodes, namespaces, and recent events.
+
+**Content**: JSON format containing:
+- **Version Information**: Client and server versions, Kubernetes version
+- **Node Details**: Node count, status, roles, capacity, and system information
+- **Namespace Summary**: Total namespaces, active count, and namespace details
+- **Storage Classes**: Available storage classes and their configurations
+- **Recent Events**: Latest cluster events with warnings and normal events
+- **Current Context**: Active OpenShift context
+- **Metadata**: Retrieval timestamp and context information
+
+**Example Usage**: 
+MCP clients can access this resource to get comprehensive cluster status without needing to make multiple tool calls.
 
 ### `oc_delete`
 Delete OpenShift resources.
