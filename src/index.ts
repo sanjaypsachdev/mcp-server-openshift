@@ -7,6 +7,8 @@ import {
   ListToolsRequestSchema,
   ListResourcesRequestSchema,
   ReadResourceRequestSchema,
+  ListPromptsRequestSchema,
+  GetPromptRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 
 // Import tools
@@ -20,6 +22,9 @@ import { OpenShiftManager } from './utils/openshift-manager.js';
 
 // Import resources
 import { clusterInfoResource, getClusterInfo } from './resources/cluster-info.js';
+
+// Import prompts
+import { troubleshootPodPrompt, generateTroubleshootPodPrompt } from './prompts/troubleshoot-pod.js';
 
 class OpenShiftMCPServer {
   private server: Server;
@@ -35,6 +40,7 @@ class OpenShiftMCPServer {
         capabilities: {
           tools: {},
           resources: {},
+          prompts: {},
         },
       }
     );
@@ -42,6 +48,7 @@ class OpenShiftMCPServer {
     this.openShiftManager = OpenShiftManager.getInstance();
     this.setupToolHandlers();
     this.setupResourceHandlers();
+    this.setupPromptHandlers();
     this.setupErrorHandling();
   }
 
@@ -143,6 +150,64 @@ class OpenShiftMCPServer {
               uri,
               mimeType: 'text/plain',
               text: `Error reading resource ${uri}: ${errorMessage}`,
+            },
+          ],
+        };
+      }
+    });
+  }
+
+  private setupPromptHandlers() {
+    // List available prompts
+    this.server.setRequestHandler(ListPromptsRequestSchema, async () => {
+      return {
+        prompts: [
+          troubleshootPodPrompt,
+          // Add more prompts here as they are implemented
+        ],
+      };
+    });
+
+    // Handle prompt requests
+    this.server.setRequestHandler(GetPromptRequestSchema, async (request) => {
+      const { name, arguments: args } = request.params;
+
+      try {
+        switch (name) {
+          case 'troubleshoot-pod-prompt':
+            const promptText = generateTroubleshootPodPrompt({
+              podName: args?.podName || 'UNKNOWN_POD',
+              namespace: args?.namespace || 'UNKNOWN_NAMESPACE',
+              symptoms: args?.symptoms,
+              containerName: args?.containerName
+            });
+            return {
+              description: `Pod troubleshooting guide for ${args?.podName || 'pod'} in ${args?.namespace || 'namespace'}`,
+              messages: [
+                {
+                  role: 'user' as const,
+                  content: {
+                    type: 'text' as const,
+                    text: promptText,
+                  },
+                },
+              ],
+            };
+
+          default:
+            throw new Error(`Unknown prompt: ${name}`);
+        }
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        return {
+          description: `Error generating prompt ${name}`,
+          messages: [
+            {
+              role: 'user' as const,
+              content: {
+                type: 'text' as const,
+                text: `Error generating prompt: ${errorMessage}`,
+              },
             },
           ],
         };

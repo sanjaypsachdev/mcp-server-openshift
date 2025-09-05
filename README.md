@@ -16,6 +16,7 @@ A Model Context Protocol (MCP) server that provides tools for managing and inter
 - **Scaling Operations**: Scale deployments, deploymentconfigs, replicasets, and statefulsets
 - **Resource Description**: Describe any resource with multiple output formats including human-readable summaries
 - **Cluster Information**: Access comprehensive cluster status, nodes, and configuration via MCP resources
+- **Troubleshooting Prompts**: Interactive troubleshooting guides for common OpenShift scenarios
 
 ## Prerequisites
 
@@ -436,6 +437,42 @@ MCP Resources provide read-only access to cluster information and configuration 
 
 **Example Usage**: 
 MCP clients can access this resource to get comprehensive cluster status without needing to make multiple tool calls.
+
+## Available Prompts
+
+MCP Prompts provide interactive troubleshooting and operational guidance templates.
+
+### `troubleshoot-pod-prompt`
+**Name**: `troubleshoot-pod-prompt`
+**Description**: Comprehensive pod troubleshooting guide covering all possible scenarios in OpenShift clusters.
+
+**Arguments:**
+- `podName` (required): Name of the pod to troubleshoot
+- `namespace` (required): Namespace/project where the pod is located  
+- `symptoms` (optional): Observed symptoms (e.g., CrashLoopBackOff, Pending, ImagePullBackOff)
+- `containerName` (optional): Specific container name if multi-container pod
+
+**Coverage**: This prompt provides systematic troubleshooting for:
+- **Pod Status Issues**: Pending, CrashLoopBackOff, ImagePullBackOff, Error, Terminating
+- **Resource Constraints**: CPU/memory limits, node capacity, quotas
+- **Configuration Problems**: Environment variables, ConfigMaps, Secrets, volumes
+- **Network Issues**: Connectivity, DNS, network policies, services
+- **Security Context**: SCC violations, privileged access, security policies
+- **OpenShift-Specific**: S2I builds, image streams, routes, build configs
+- **Storage Issues**: PVC binding, storage classes, volume mounts
+- **Application Errors**: Startup failures, health check failures, dependencies
+
+**Example Usage**:
+```
+Use prompt: troubleshoot-pod-prompt
+Arguments: 
+- podName: "my-app-12345-abcde"
+- namespace: "my-project" 
+- symptoms: "CrashLoopBackOff"
+- containerName: "web-server"
+```
+
+The prompt generates a comprehensive, step-by-step troubleshooting guide customized for the specific pod and symptoms.
 
 ### `oc_delete`
 Delete OpenShift resources.
