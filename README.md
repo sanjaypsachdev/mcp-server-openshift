@@ -17,6 +17,7 @@ A Model Context Protocol (MCP) server that provides tools for managing and inter
 - **Resource Description**: Describe any resource with multiple output formats including human-readable summaries
 - **Cluster Information**: Access comprehensive cluster status, nodes, and configuration via MCP resources
 - **Troubleshooting Prompts**: Interactive troubleshooting guides for common OpenShift scenarios
+- **Log Sampling**: Sample and analyze pod logs with intelligent pattern detection and context
 
 ## Prerequisites
 
@@ -473,6 +474,65 @@ Arguments:
 ```
 
 The prompt generates a comprehensive, step-by-step troubleshooting guide customized for the specific pod and symptoms.
+
+## Available Sampling
+
+MCP Sampling allows the server to intelligently sample and analyze log data for troubleshooting and monitoring.
+
+### Pod Logs Sampling
+**Description**: Automatically sample recent pod logs with intelligent analysis and context.
+
+**Usage**: Ask the MCP client to sample pod logs using natural language:
+- "Sample pod logs for my-pod-12345 in namespace my-app"
+- "Sample pod logs for web-server-67890 in namespace frontend container nginx since 30m lines 100"
+- "Analyze pod logs for database-pod in namespace backend"
+
+**Features**:
+- **Current Logs**: Recent log entries with timestamps
+- **Previous Logs**: Logs from before the last restart (for crash analysis)
+- **Container Status**: Current state, restart count, exit codes
+- **Recent Events**: Pod-related events for context
+- **Pattern Analysis**: Automatic detection of common error patterns
+- **Intelligent Formatting**: Markdown-formatted output with syntax highlighting
+
+**Sampling Options**:
+- **Time Range**: `5m`, `30m`, `1h`, `2h`, `1d` (default: 1h)
+- **Max Lines**: 1-1000 lines (default: 100)
+- **Container**: Specific container name for multi-container pods
+- **Include Previous**: Previous container logs before restart (default: true)
+
+**Analysis Patterns Detected**:
+- Application errors and exceptions
+- Memory issues (OOMKilled)
+- Configuration problems
+- Network/dependency failures
+- Resource constraint indicators
+
+**Example Output**:
+```
+# Pod Logs Sample Analysis
+# Pod: my-app-12345
+# Namespace: my-project
+# Container: web-server
+# Max Lines: 100
+# Time Range: Last 1h
+# Sampled At: 2024-01-15T10:30:00Z
+
+## 📋 CURRENT CONTAINER LOGS
+[Timestamped log entries with syntax highlighting]
+
+## 📜 PREVIOUS CONTAINER LOGS (Before Last Restart)
+[Previous container logs for crash analysis]
+
+## 🔍 POD STATUS CONTEXT
+[Container statuses, restart counts, exit codes]
+
+## 📅 RECENT EVENTS
+[Pod-related events for additional context]
+
+## 💡 ANALYSIS HINTS
+[Common patterns and what to look for]
+```
 
 ### `oc_delete`
 Delete OpenShift resources.
