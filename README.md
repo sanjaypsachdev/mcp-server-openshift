@@ -14,6 +14,7 @@ A Model Context Protocol (MCP) server that provides tools for managing and inter
 - **Operator Management**: Install operators via OLM, Helm, or direct manifests
 - **Application Deployment**: Deploy applications from Git repositories using S2I builds with automatic route exposure
 - **Scaling Operations**: Scale deployments, deploymentconfigs, replicasets, and statefulsets
+- **Resource Description**: Describe any resource with multiple output formats including human-readable summaries
 
 ## Prerequisites
 
@@ -341,6 +342,75 @@ Scale a statefulset to 5 replicas:
     "replicas": 5,
     "resourceType": "statefulset",
     "namespace": "databases"
+  }
+}
+```
+
+### `oc_describe`
+Describe any OpenShift resource and share the output in various formats including human-readable summary.
+
+**Parameters:**
+- `resourceType` (required): Type of resource to describe (pod, deployment, service, route, etc.)
+- `name` (required): Name of the resource to describe
+- `namespace` (optional): Target namespace/project (default: "default")
+- `context` (optional): OpenShift context to use
+- `output` (optional): Output format - "text", "yaml", "json", or "human-readable" (default: "human-readable")
+
+**Output Formats:**
+- **`text`**: Standard `oc describe` output with detailed information
+- **`yaml`**: Resource definition in YAML format
+- **`json`**: Resource definition in JSON format  
+- **`human-readable`**: Concise, pointwise summary with emojis and key information
+
+**Examples:**
+
+Get human-readable summary of a deployment:
+```json
+{
+  "name": "oc_describe",
+  "arguments": {
+    "resourceType": "deployment",
+    "name": "my-app",
+    "namespace": "my-project"
+  }
+}
+```
+
+Get detailed text description of a pod:
+```json
+{
+  "name": "oc_describe",
+  "arguments": {
+    "resourceType": "pod",
+    "name": "my-app-12345-abcde",
+    "namespace": "my-project",
+    "output": "text"
+  }
+}
+```
+
+Get service definition in YAML format:
+```json
+{
+  "name": "oc_describe",
+  "arguments": {
+    "resourceType": "service",
+    "name": "my-service",
+    "namespace": "my-project",
+    "output": "yaml"
+  }
+}
+```
+
+Get route information in JSON format:
+```json
+{
+  "name": "oc_describe",
+  "arguments": {
+    "resourceType": "route",
+    "name": "my-route",
+    "namespace": "my-project",
+    "output": "json"
   }
 }
 ```

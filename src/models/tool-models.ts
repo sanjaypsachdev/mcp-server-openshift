@@ -135,6 +135,14 @@ export const OcNewAppSchema = z.object({
   strategy: z.enum(['source', 'docker']).optional().default('source').describe('Build strategy: source (S2I) or docker')
 });
 
+export const OcDescribeSchema = z.object({
+  resourceType: z.string().describe('Type of resource to describe (pod, deployment, service, route, etc.)'),
+  name: z.string().describe('Name of the resource to describe'),
+  namespace: NamespaceSchema.describe('OpenShift namespace/project'),
+  context: ContextSchema.describe('OpenShift context to use (optional)'),
+  output: z.enum(['text', 'yaml', 'json', 'human-readable']).optional().default('human-readable').describe('Output format: text (default oc describe), yaml, json, or human-readable (concise summary)')
+});
+
 // Type exports
 export type OcGetParams = z.infer<typeof OcGetSchema>;
 export type OcCreateParams = z.infer<typeof OcCreateSchema>;
@@ -147,3 +155,4 @@ export type OcStartBuildParams = z.infer<typeof OcStartBuildSchema>;
 export type OcExposeParams = z.infer<typeof OcExposeSchema>;
 export type OcInstallOperatorParams = z.infer<typeof OcInstallOperatorSchema>;
 export type OcNewAppParams = z.infer<typeof OcNewAppSchema>;
+export type OcDescribeParams = z.infer<typeof OcDescribeSchema>;
