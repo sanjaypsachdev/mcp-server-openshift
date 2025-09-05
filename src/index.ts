@@ -2,6 +2,7 @@
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
+import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import {
   CallToolRequestSchema,
   ListToolsRequestSchema,
@@ -363,11 +364,198 @@ To sample pod logs, please specify:
       console.error('Warning: OpenShift CLI (oc) not found in PATH. Some functionality may not work.');
     }
 
+    // Determine transport type based on environment variables or command line arguments
+    const transportType = this.getTransportType();
+    
+    if (transportType === 'sse') {
+      await this.startHttpServer();
+    } else {
+      await this.startStdioServer();
+    }
+  }
+
+  private async startStdioServer() {
     const transport = new StdioServerTransport();
     await this.server.connect(transport);
-    console.error('MCP OpenShift server started');
+    console.error('MCP OpenShift server started with STDIO transport');
+  }
+
+  private async startHttpServer() {
+    // Parse port from command line arguments or use default
+    const args = process.argv.slice(2);
+    const portArg = args.find(arg => arg.startsWith('--port='));
+    const port = portArg ? parseInt(portArg.split('=')[1]) : parseInt(process.env.MCP_PORT || '3000');
+    const host = process.env.MCP_HOST || 'localhost';
+    
+    console.error(`Starting HTTP server on ${host}:${port}`);
+    console.error(`Connect using: http://${host}:${port}/sse`);
+    
+    // Create HTTP server
+    const http = await import('http');
+    const httpServer = http.createServer((req, res) => {
+      // Handle CORS for web clients
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+      
+      if (req.method === 'OPTIONS') {
+        res.writeHead(200);
+        res.end();
+        return;
+      }
+      
+      // Handle SSE endpoint
+      if (req.url === '/sse') {
+        // Create SSE transport for this request
+        const transport = new SSEServerTransport('/sse', res);
+        this.server.connect(transport).catch(error => {
+          console.error('Failed to connect SSE transport:', error);
+        });
+        return;
+      }
+      
+      // Handle other requests
+      if (req.url === '/' || req.url === '/health') {
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          name: 'MCP OpenShift Server',
+          version: '1.0.0',
+          transport: 'HTTP/SSE',
+          endpoints: {
+            sse: '/sse',
+            health: '/health'
+          },
+          status: 'running'
+        }));
+        return;
+      }
+      
+      // 404 for other paths
+      res.writeHead(404, { 'Content-Type': 'text/plain' });
+      res.end('MCP OpenShift Server - Use /sse endpoint for MCP communication');
+    });
+    
+    // Start the HTTP server
+    await new Promise<void>((resolve, reject) => {
+      httpServer.listen(port, host, (err?: Error) => {
+        if (err) {
+          reject(err);
+        } else {
+          console.error(`HTTP server listening on ${host}:${port}`);
+          console.error(`Health check: http://${host}:${port}/health`);
+          resolve();
+        }
+      });
+    });
+  }
+
+  private getTransportType(): 'stdio' | 'sse' {
+    // Check environment variables
+    if (process.env.MCP_TRANSPORT === 'sse' || process.env.MCP_TRANSPORT === 'http') {
+      return 'sse';
+    }
+    
+    // Check command line arguments
+    const args = process.argv.slice(2);
+    if (args.includes('--transport=sse') || args.includes('--transport=http')) {
+      return 'sse';
+    }
+    if (args.includes('--http') || args.includes('--sse')) {
+      return 'sse';
+    }
+    
+    // Check for port argument (indicates HTTP mode)
+    const portArg = args.find(arg => arg.startsWith('--port='));
+    if (portArg) {
+      return 'sse';
+    }
+    
+    // Default to stdio for backward compatibility
+    return 'stdio';
+  }
+
+}
+
+// Command line argument parsing
+function parseArgs() {
+  const args = process.argv.slice(2);
+  
+  if (args.includes('--help') || args.includes('-h')) {
+    console.log(`
+MCP OpenShift Server
+
+USAGE:
+  mcp-server-openshift [OPTIONS]
+
+OPTIONS:
+  --help, -h              Show this help message
+  --transport=<type>      Transport type: stdio (default) or sse/http
+  --http                  Use HTTP transport (alias for --transport=sse)
+  --sse                   Use SSE transport (alias for --transport=sse)
+  --port=<port>           Port for HTTP transport (default: 3000)
+  --host=<host>           Host for HTTP transport (default: localhost)
+
+ENVIRONMENT VARIABLES:
+  MCP_TRANSPORT           Transport type: stdio or sse/http
+  MCP_PORT                Port for HTTP transport (default: 3000)
+  MCP_HOST                Host for HTTP transport (default: localhost)
+  OPENSHIFT_CONTEXT       Default OpenShift context
+  OPENSHIFT_NAMESPACE     Default namespace/project
+
+TRANSPORT MODES:
+
+  STDIO (Default):
+    Use for direct MCP client integration (Claude Desktop, Cursor, VS Code)
+    
+    Example configuration:
+    {
+      "mcpServers": {
+        "openshift": {
+          "command": "node",
+          "args": ["/path/to/mcp-server-openshift/dist/index.js"]
+        }
+      }
+    }
+
+  HTTP/SSE (Streamable):
+    Use for web-based access or remote MCP clients
+    
+    Start server: mcp-server-openshift --http --port=3000
+    Connect to: http://localhost:3000/sse
+    
+    Example configuration:
+    {
+      "mcpServers": {
+        "openshift": {
+          "command": "npx",
+          "args": [
+            "-y", "mcp-remote", 
+            "http://localhost:3000/sse", 
+            "--transport", "sse-only"
+          ]
+        }
+      }
+    }
+
+EXAMPLES:
+  # Start with stdio transport (default)
+  mcp-server-openshift
+  
+  # Start with HTTP transport on default port 3000
+  mcp-server-openshift --http
+  
+  # Start with HTTP transport on custom port
+  mcp-server-openshift --transport=sse --port=8080
+  
+  # Start with environment variables
+  MCP_TRANSPORT=sse MCP_PORT=3000 mcp-server-openshift
+`);
+    process.exit(0);
   }
 }
+
+// Parse command line arguments
+parseArgs();
 
 // Start the server
 const server = new OpenShiftMCPServer();

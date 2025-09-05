@@ -67,6 +67,7 @@ Add to your Claude Desktop configuration file (`~/.claude/mcp.json` on macOS/Lin
 
 ### Cursor
 
+**STDIO Transport (Recommended)**:
 Add to your Cursor MCP configuration file (`~/.cursor/mcp.json`):
 
 ```json
@@ -79,6 +80,25 @@ Add to your Cursor MCP configuration file (`~/.cursor/mcp.json`):
         "OPENSHIFT_CONTEXT": "your-context-name",
         "OPENSHIFT_NAMESPACE": "your-default-namespace"
       }
+    }
+  }
+}
+```
+
+**HTTP/SSE Transport** (for remote or web-based access):
+1. Start the server: `npm run start:http`
+2. Add to your Cursor configuration:
+
+```json
+{
+  "mcpServers": {
+    "openshift-remote": {
+      "command": "npx",
+      "args": [
+        "-y", "mcp-remote", 
+        "http://localhost:3000/sse", 
+        "--transport", "sse-only"
+      ]
     }
   }
 }
@@ -129,6 +149,72 @@ For other MCP clients, use this standard configuration:
 - **Context**: Set `OPENSHIFT_CONTEXT` to your OpenShift cluster context name, or leave empty to use the current context
 - **Namespace**: Set `OPENSHIFT_NAMESPACE` to your default project/namespace, or use "default"
 - **Restart**: After adding the configuration, restart your MCP client to load the server
+
+## Transport Modes
+
+The MCP OpenShift server supports two transport modes for different use cases:
+
+### STDIO Transport (Default)
+**Best for**: Direct integration with MCP clients (Claude Desktop, Cursor, VS Code)
+**Characteristics**:
+- Direct process communication
+- Lower latency
+- Automatic lifecycle management
+- Recommended for local development
+
+**Usage**:
+```bash
+# Start with STDIO (default)
+npm start
+node dist/index.js
+```
+
+### HTTP/SSE Transport (Streamable)
+**Best for**: Web-based access, remote clients, containerized deployments
+**Characteristics**:
+- HTTP-based communication
+- Streamable responses
+- Remote accessibility
+- Web integration friendly
+- Container deployment ready
+
+**Usage**:
+```bash
+# Start HTTP server on port 3000
+npm run start:http
+node dist/index.js --http --port=3000
+
+# Start with custom port
+node dist/index.js --transport=sse --port=8080
+
+# Start with environment variables
+MCP_TRANSPORT=sse MCP_PORT=3000 npm start
+```
+
+**Connection**: `http://localhost:3000/sse`
+
+### Transport Selection
+The server automatically detects the transport mode based on:
+1. **Environment Variables**: `MCP_TRANSPORT=sse|stdio`
+2. **Command Arguments**: `--transport=sse`, `--http`, `--sse`
+3. **Port Arguments**: `--port=<number>` (implies HTTP mode)
+4. **Default**: STDIO for backward compatibility
+
+### Use Cases by Transport
+
+**STDIO Transport**:
+- Local development with AI assistants
+- Direct MCP client integration
+- Low-latency operations
+- Single-user scenarios
+
+**HTTP/SSE Transport**:
+- Remote OpenShift cluster management
+- Web-based dashboards and interfaces
+- Multi-user access scenarios
+- Containerized MCP server deployments
+- Integration with web applications
+- Load balancing and scaling scenarios
 
 ## Available Tools
 
@@ -740,9 +826,36 @@ npm install
 npm run build
 ```
 
+### Start Server (Multiple Transport Options)
+
+**STDIO Transport (Default)**:
+```bash
+npm start
+# or
+npm run start:stdio
+# or
+node dist/index.js
+```
+
+**HTTP/SSE Transport**:
+```bash
+npm run start:http
+# or
+npm run start:sse
+# or
+node dist/index.js --http --port=3000
+```
+
 ### Development Mode
+
+**STDIO Development**:
 ```bash
 npm run dev
+```
+
+**HTTP Development**:
+```bash
+npm run dev:http
 ```
 
 ### Testing
