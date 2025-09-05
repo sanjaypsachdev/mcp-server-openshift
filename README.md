@@ -13,6 +13,7 @@ A Model Context Protocol (MCP) server that provides tools for managing and inter
 - **Multi-Context Support**: Work with multiple OpenShift clusters
 - **Operator Management**: Install operators via OLM, Helm, or direct manifests
 - **Application Deployment**: Deploy applications from Git repositories using S2I builds with automatic route exposure
+- **Scaling Operations**: Scale deployments, deploymentconfigs, replicasets, and statefulsets
 
 ## Prerequisites
 
@@ -222,6 +223,56 @@ Docker strategy deployment:
     "strategy": "docker",
     "gitRef": "main",
     "contextDir": "app"
+  }
+}
+```
+
+### `oc_scale`
+Scale the number of pods in a deployment, deploymentconfig, replicaset, or statefulset to the specified number of replicas.
+
+**Parameters:**
+- `name` (required): Name of the resource to scale
+- `replicas` (required): Number of replicas to scale to
+- `resourceType` (optional): Resource type to scale - "deployment", "deploymentconfig", "replicaset", or "statefulset" (default: "deployment")
+- `namespace` (optional): Target namespace/project (default: "default")
+- `context` (optional): OpenShift context to use
+
+**Examples:**
+
+Scale a deployment to 3 replicas:
+```json
+{
+  "name": "oc_scale",
+  "arguments": {
+    "name": "my-app",
+    "replicas": 3,
+    "namespace": "my-project"
+  }
+}
+```
+
+Scale a deploymentconfig to 0 replicas (stop the app):
+```json
+{
+  "name": "oc_scale",
+  "arguments": {
+    "name": "legacy-app",
+    "replicas": 0,
+    "resourceType": "deploymentconfig",
+    "namespace": "legacy-apps"
+  }
+}
+```
+
+Scale a statefulset to 5 replicas:
+```json
+{
+  "name": "oc_scale",
+  "arguments": {
+    "name": "database-cluster",
+    "replicas": 5,
+    "resourceType": "statefulset",
+    "namespace": "databases"
   }
 }
 ```

@@ -58,9 +58,9 @@ export const OcApplySchema = z.object({
 });
 
 export const OcScaleSchema = z.object({
-  resourceType: z.string().default('deploymentconfig').describe('Resource type to scale'),
+  resourceType: z.enum(['deployment', 'deploymentconfig', 'replicaset', 'statefulset']).optional().default('deployment').describe('Resource type to scale (deployment, deploymentconfig, replicaset, statefulset)'),
   name: z.string().describe('Name of the resource to scale'),
-  replicas: z.number().describe('Number of replicas to scale to'),
+  replicas: z.number().min(0).describe('Number of replicas to scale to'),
   namespace: NamespaceSchema.describe('OpenShift namespace/project'),
   context: ContextSchema.describe('OpenShift context to use (optional)')
 });
