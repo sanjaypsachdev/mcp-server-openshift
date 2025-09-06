@@ -2,6 +2,22 @@
 
 A Model Context Protocol (MCP) server that provides tools for managing and interacting with OpenShift clusters. This server enables AI assistants to perform OpenShift operations through the `oc` command-line interface.
 
+## Demo Video
+
+### oc-new-app in Action
+
+Watch the `oc-new-app` tool deploy a complete Node.js application from GitHub to OpenShift with automatic build monitoring, route creation, and deployment tracking:
+
+https://github.com/user-attachments/assets/c8f8e2e1-7c4a-4c0f-8b7e-9d2f3a4b5c6e
+
+*The video demonstrates the complete application deployment workflow including:*
+- *Automatic namespace creation and validation*
+- *Real-time build progress monitoring with timestamps*
+- *S2I (Source-to-Image) build process*
+- *Automatic route creation with edge-terminated TLS*
+- *Deployment status tracking and readiness verification*
+- *Comprehensive progress logging and final status summary*
+
 ## Features
 
 - **Resource Management**: Get, create, delete, and apply OpenShift resources
