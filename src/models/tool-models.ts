@@ -37,15 +37,26 @@ export const OcCreateSchema = z.object({
 });
 
 export const OcDeleteSchema = z.object({
-  resourceType: z.string().describe('Type of resource to delete'),
-  name: z.string().optional().describe('Name of the resource'),
+  resourceType: z.string().optional().describe('Type of resource to delete (required if not using manifest/filename)'),
+  name: z.string().optional().describe('Name of the resource to delete'),
   namespace: NamespaceSchema.describe('OpenShift namespace/project'),
   context: ContextSchema.describe('OpenShift context to use (optional)'),
   manifest: z.string().optional().describe('YAML manifest defining resources to delete'),
   filename: z.string().optional().describe('Path to YAML file to delete resources from'),
+  url: z.string().optional().describe('URL to YAML manifest defining resources to delete'),
   labelSelector: z.string().optional().describe('Delete resources matching label selector'),
-  force: z.boolean().optional().default(false).describe('Force deletion'),
-  gracePeriodSeconds: z.number().optional().describe('Grace period for deletion')
+  fieldSelector: z.string().optional().describe('Delete resources matching field selector'),
+  all: z.boolean().optional().default(false).describe('Delete all resources of the specified type'),
+  allNamespaces: z.boolean().optional().default(false).describe('Delete resources across all namespaces'),
+  force: z.boolean().optional().default(false).describe('Force deletion (bypass finalizers)'),
+  gracePeriodSeconds: z.number().optional().describe('Grace period for deletion in seconds'),
+  timeout: z.string().optional().describe('Timeout for deletion operation (e.g., "60s", "5m")'),
+  wait: z.boolean().optional().default(false).describe('Wait for deletion to complete'),
+  cascade: z.enum(['background', 'foreground', 'orphan']).optional().default('background').describe('Deletion cascade strategy'),
+  dryRun: z.boolean().optional().default(false).describe('Show what would be deleted without actually deleting'),
+  confirm: z.boolean().optional().default(false).describe('Require explicit confirmation for destructive operations'),
+  recursive: z.boolean().optional().default(false).describe('Process directory recursively'),
+  ignore404: z.boolean().optional().default(false).describe('Ignore 404 errors if resource does not exist')
 });
 
 export const OcApplySchema = z.object({
