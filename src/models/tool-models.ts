@@ -91,16 +91,21 @@ export const OcScaleSchema = z.object({
 });
 
 export const OcLogsSchema = z.object({
-  resourceType: z.enum(['pod', 'deploymentconfig', 'build']).describe('Type of resource to get logs from'),
+  resourceType: z.enum(['pod', 'deploymentconfig', 'deployment', 'build', 'buildconfig', 'job']).optional().default('pod').describe('Type of resource to get logs from'),
   name: z.string().describe('Name of the resource'),
   namespace: NamespaceSchema.describe('OpenShift namespace/project'),
   context: ContextSchema.describe('OpenShift context to use (optional)'),
   container: z.string().optional().describe('Container name (for pods with multiple containers)'),
-  follow: z.boolean().optional().default(false).describe('Follow logs output'),
-  previous: z.boolean().optional().default(false).describe('Show logs from previous container'),
-  since: z.string().optional().describe('Show logs since relative time (e.g. 5s, 2m, 3h)'),
-  tail: z.number().optional().describe('Number of lines to show from end of logs'),
-  timestamps: z.boolean().optional().default(false).describe('Include timestamps')
+  follow: z.boolean().optional().default(false).describe('Follow logs output (stream live logs)'),
+  previous: z.boolean().optional().default(false).describe('Show logs from previous terminated container'),
+  since: z.string().optional().describe('Show logs since relative time (e.g. 5s, 2m, 3h) or absolute time'),
+  sinceTime: z.string().optional().describe('Show logs since absolute timestamp (RFC3339)'),
+  tail: z.number().min(0).optional().describe('Number of lines to show from end of logs (-1 for all)'),
+  timestamps: z.boolean().optional().default(false).describe('Include timestamps in log output'),
+  limitBytes: z.number().min(1).optional().describe('Maximum bytes to return'),
+  allContainers: z.boolean().optional().default(false).describe('Get logs from all containers in the pod'),
+  selector: z.string().optional().describe('Label selector to filter pods'),
+  maxLogRequests: z.number().min(1).max(20).optional().default(5).describe('Maximum number of concurrent log requests when using selectors')
 });
 
 export const OcRolloutSchema = z.object({
