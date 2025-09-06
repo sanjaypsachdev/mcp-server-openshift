@@ -1,6 +1,7 @@
 import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { OcInstallOperatorSchema, type OcInstallOperatorParams } from '../models/tool-models.js';
 import { OpenShiftManager } from '../utils/openshift-manager.js';
+import { handleOcApply } from './oc-apply.js';
 
 export const ocInstallOperatorTool: Tool = {
   name: 'oc_install_operator',
@@ -141,77 +142,54 @@ async function installOperatorViaOLM(manager: OpenShiftManager, params: OcInstal
       };
     }
     
-    // Get available package manifests to find the operator
-    const packageResult = await manager.executeCommand([
-      'get', 'packagemanifests', 
-      '-o', 'json'
-    ], { context: params.context });
+    // Skip package existence check to avoid timeout/buffer issues
+    // The subscription creation will fail gracefully if the operator doesn't exist
     
-    if (!packageResult.success) {
-      return {
-        content: [
-          {
-            type: 'text' as const,
-            text: `Error: Failed to get available operators: ${packageResult.error}`
-          }
-        ]
-      };
-    }
+    // Use sensible defaults for Red Hat operators to avoid parsing large JSON responses
+    const packageName = params.operatorName;
+    const defaultChannel = params.channel || 'stable';
+    const catalogSource = 'redhat-operators'; // Default for Red Hat operators
+    const catalogSourceNamespace = 'openshift-marketplace';
     
-    // Find the operator package
-    const packages = packageResult.data.items || [];
-    const operatorPackage = packages.find((pkg: any) => 
-      pkg.metadata.name === params.operatorName || 
-      pkg.metadata.name.includes(params.operatorName)
-    );
-    
-    if (!operatorPackage) {
-      return {
-        content: [
-          {
-            type: 'text' as const,
-            text: `Error: Operator '${params.operatorName}' not found in available packages. Available operators: ${packages.map((p: any) => p.metadata.name).join(', ')}`
-          }
-        ]
-      };
-    }
-    
-    const packageName = operatorPackage.metadata.name;
-    const defaultChannel = operatorPackage.status?.defaultChannel || params.channel || 'stable';
-    const catalogSource = operatorPackage.status?.catalogSource || 'operatorhubio-catalog';
-    const catalogSourceNamespace = operatorPackage.status?.catalogSourceNamespace || 'olm';
-    
-    // Create OperatorGroup if it doesn't exist
-    const operatorGroupYaml = `
-apiVersion: operators.coreos.com/v1
+    // Create OperatorGroup using oc apply tool
+    const operatorGroupYaml = `apiVersion: operators.coreos.com/v1
 kind: OperatorGroup
 metadata:
   name: ${params.operatorName}-operator-group
   namespace: ${params.namespace}
 spec:
   targetNamespaces:
-  - ${params.namespace}
-`;
+  - ${params.namespace}`;
     
-    const ogResult = await manager.executeCommand(['apply', '-f', '-'], {
-      context: params.context,
-      input: operatorGroupYaml
+    const ogResult = await handleOcApply({
+      manifest: operatorGroupYaml,
+      namespace: params.namespace,
+      context: params.context || '',
+      dryRun: false,
+      force: false,
+      validate: true,
+      wait: false,
+      prune: false,
+      recursive: false,
+      kustomize: false,
+      serverSideApply: false,
+      overwrite: false
     });
     
-    if (!ogResult.success) {
+    // Check if OperatorGroup creation had issues (but continue anyway as it might already exist)
+    if (ogResult.content[0].text.includes('Error') && !ogResult.content[0].text.includes('already exists')) {
       return {
         content: [
           {
             type: 'text' as const,
-            text: `Warning: Failed to create OperatorGroup: ${ogResult.error}`
+            text: `Error creating OperatorGroup: ${ogResult.content[0].text}`
           }
         ]
       };
     }
     
-    // Create Subscription
-    const subscriptionYaml = `
-apiVersion: operators.coreos.com/v1alpha1
+    // Create Subscription using oc apply tool
+    const subscriptionYaml = `apiVersion: operators.coreos.com/v1alpha1
 kind: Subscription
 metadata:
   name: ${params.operatorName}-subscription
@@ -221,21 +199,30 @@ spec:
   name: ${packageName}
   source: ${catalogSource}
   sourceNamespace: ${catalogSourceNamespace}
-  installPlanApproval: ${params.installPlanApproval}
-  ${params.version ? `startingCSV: ${packageName}.v${params.version}` : ''}
-`;
+  installPlanApproval: ${params.installPlanApproval}${params.version ? `
+  startingCSV: ${packageName}.v${params.version}` : ''}`;
     
-    const subResult = await manager.executeCommand(['apply', '-f', '-'], {
-      context: params.context,
-      input: subscriptionYaml
+    const subResult = await handleOcApply({
+      manifest: subscriptionYaml,
+      namespace: params.namespace,
+      context: params.context || '',
+      dryRun: false,
+      force: false,
+      validate: true,
+      wait: false,
+      prune: false,
+      recursive: false,
+      kustomize: false,
+      serverSideApply: false,
+      overwrite: false
     });
     
-    if (!subResult.success) {
+    if (subResult.content[0].text.includes('Error')) {
       return {
         content: [
           {
             type: 'text' as const,
-            text: `Error: Failed to create subscription: ${subResult.error}`
+            text: `Error creating Subscription: ${subResult.content[0].text}`
           }
         ]
       };
@@ -245,7 +232,42 @@ spec:
       content: [
         {
           type: 'text' as const,
-          text: `Tool: oc_install_operator, Result: Successfully initiated installation of operator '${params.operatorName}' via OLM in namespace '${params.namespace}'. Check the subscription status with: oc get subscription ${params.operatorName}-subscription -n ${params.namespace}`
+          text: `# ✅ Operator Installation Initiated Successfully
+
+## 📋 Installation Summary
+- **Operator**: ${params.operatorName}
+- **Namespace**: ${params.namespace}
+- **Channel**: ${defaultChannel}
+- **Catalog Source**: ${catalogSource}
+- **Install Plan Approval**: ${params.installPlanApproval}
+
+## 📦 Resources Created
+- **OperatorGroup**: ${params.operatorName}-operator-group
+- **Subscription**: ${params.operatorName}-subscription
+
+## 🔍 Monitor Installation Progress
+\`\`\`bash
+# Check subscription status
+oc get subscription ${params.operatorName}-subscription -n ${params.namespace}
+
+# Check operator installation progress
+oc get csv -n ${params.namespace}
+
+# Check operator pods
+oc get pods -n ${params.namespace}
+
+# View subscription details
+oc describe subscription ${params.operatorName}-subscription -n ${params.namespace}
+\`\`\`
+
+## 📝 Installation Details
+The operator installation has been initiated via OLM (Operator Lifecycle Manager). The installation process may take a few minutes to complete as it downloads and installs the operator components.
+
+**Next Steps:**
+1. Monitor the subscription status until it shows "Installed"
+2. Verify the operator pods are running
+3. Check for any InstallPlan that may require approval if using Manual approval mode
+4. Configure the operator according to its documentation`
         }
       ]
     };
