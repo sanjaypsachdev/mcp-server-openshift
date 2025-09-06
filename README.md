@@ -8,7 +8,7 @@ A Model Context Protocol (MCP) server that provides tools for managing and inter
 
 Watch the `oc-new-app` tool deploy a complete Spring Boot application from GitHub to OpenShift with automatic build monitoring, route creation, and deployment tracking:
 
-![oc-new-app Demo](oc-new-app.mov)
+![oc-new-app Demo](oc-new-app.mp4)
 
 *The video demonstrates the complete application deployment workflow including:*
 - *Automatic namespace creation and validation*
