@@ -10,12 +10,20 @@ https://github.com/user-attachments/assets/f4bace3f-755b-462f-8a8a-680e4dc02129
 
 ## Features
 
-- **Complete Resource Management**: Create, read, update, delete, and patch all OpenShift/Kubernetes resources
-- **Application Deployment**: Deploy applications from Git repositories with S2I builds and automatic route creation
-- **Cluster Operations**: Scaling, monitoring, troubleshooting, and operator management
-- **Multi-Transport Support**: STDIO and HTTP/SSE transports for different integration scenarios
-- **Comprehensive Testing**: 99 unit tests ensuring production reliability
-- **Rich Error Handling**: Detailed troubleshooting guidance and actionable error messages
+- **Resource Management**: Get, create, delete, and apply OpenShift resources
+- **Project Operations**: Create and manage OpenShift projects
+- **Deployment Management**: Handle DeploymentConfigs, scaling, and rollouts
+- **Route Management**: Create and manage OpenShift routes
+- **Build Operations**: Start and monitor OpenShift builds
+- **Logging**: Retrieve logs from pods, deploymentconfigs, and builds
+- **Multi-Context Support**: Work with multiple OpenShift clusters
+- **Operator Management**: Install operators via OLM, Helm, or direct manifests
+- **Application Deployment**: Deploy applications from Git repositories using S2I builds with automatic route exposure
+- **Scaling Operations**: Scale deployments, deploymentconfigs, replicasets, and statefulsets
+- **Resource Description**: Describe any resource with multiple output formats including human-readable summaries
+- **Cluster Information**: Access comprehensive cluster status, nodes, and configuration via MCP resources
+- **Troubleshooting Prompts**: Interactive troubleshooting guides for common OpenShift scenarios
+- **Log Sampling**: Sample and analyze pod logs with intelligent pattern detection and context
 
 ## Prerequisites
 
