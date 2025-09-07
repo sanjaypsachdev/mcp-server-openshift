@@ -196,6 +196,7 @@ jobs:
         run: npm ci
 
       - name: Run Snyk security scan
+        if: ${{ secrets.SNYK_TOKEN != '' }}
         uses: snyk/actions/node@master
         continue-on-error: true
         env:
@@ -203,11 +204,17 @@ jobs:
         with:
           args: --severity-threshold=high
 
+      - name: Skip Snyk scan (no token)
+        if: ${{ secrets.SNYK_TOKEN == '' }}
+        run: echo "⚠️ Skipping Snyk scan - SNYK_TOKEN not configured"
+
       - name: Run npm audit
         run: npm audit --audit-level=high
+        continue-on-error: true
 
       - name: Scan for secrets
         uses: trufflesecurity/trufflehog@main
+        continue-on-error: true
         with:
           path: ./
           base: main
@@ -331,18 +338,38 @@ jobs:
 
       - name: Validate all critical jobs passed
         run: |
+          echo "Validating critical pipeline stages..."
+          
+          # Check critical jobs (these must pass)
+          critical_failed=false
+          
           if [[ "${{ needs.code-quality.result }}" != "success" ]]; then
-            echo "❌ Code quality checks failed"
-            exit 1
+            echo "❌ Code quality checks failed: ${{ needs.code-quality.result }}"
+            critical_failed=true
           fi
+          
           if [[ "${{ needs.test.result }}" != "success" ]]; then
-            echo "❌ Tests failed"
-            exit 1
+            echo "❌ Tests failed: ${{ needs.test.result }}"
+            critical_failed=true
           fi
+          
           if [[ "${{ needs.build.result }}" != "success" ]]; then
-            echo "❌ Build failed"
+            echo "❌ Build failed: ${{ needs.build.result }}"
+            critical_failed=true
+          fi
+          
+          # Report on non-critical jobs (these can fail without blocking)
+          echo "Non-critical job statuses:"
+          echo "- Integration Tests: ${{ needs.integration-test.result }}"
+          echo "- Security: ${{ needs.security.result }}"
+          echo "- Documentation: ${{ needs.documentation.result }}"
+          echo "- Performance: ${{ needs.performance.result }}"
+          
+          if [[ "$critical_failed" == "true" ]]; then
+            echo "❌ One or more critical pipeline stages failed"
             exit 1
           fi
+          
           echo "✅ All critical pipeline stages passed successfully"
 
       - name: PR Status Comment

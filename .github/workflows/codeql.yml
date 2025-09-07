@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [ 'typescript' ]
+        language: [ 'javascript' ]
 
     steps:
     - name: Checkout repository
@@ -30,7 +30,7 @@ jobs:
       uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
-        queries: +security-and-quality
+        queries: security-extended,security-and-quality
 
     - name: Setup Node.js
       uses: actions/setup-node@v4
@@ -48,3 +48,5 @@ jobs:
       uses: github/codeql-action/analyze@v3
       with:
         category: "/language:${{matrix.language}}"
+        upload: true
+        wait-for-processing: true
