@@ -402,6 +402,19 @@ async function installOperatorViaManifest(
   }
 
   try {
+    // Validate URL for security
+    if (!isValidManifestUrl(params.manifestUrl)) {
+      return {
+        content: [
+          {
+            type: 'text' as const,
+            text: 'Error: Invalid manifest URL format. Only HTTPS URLs from trusted domains are allowed.',
+          },
+        ],
+        isError: true,
+      };
+    }
+
     // Apply the manifest from URL
     const applyResult = await manager.executeCommand(
       ['apply', '-f', params.manifestUrl, '--namespace', params.namespace],
@@ -436,5 +449,56 @@ async function installOperatorViaManifest(
         },
       ],
     };
+  }
+}
+
+function isValidManifestUrl(url: string): boolean {
+  try {
+    // Basic URL format validation
+    if (!url || typeof url !== 'string' || url.trim().length === 0) {
+      return false;
+    }
+
+    // Parse the URL
+    const parsedUrl = new URL(url.trim());
+    
+    // Only allow HTTPS for security
+    if (parsedUrl.protocol !== 'https:') {
+      return false;
+    }
+
+    // Ensure hostname is present and valid
+    if (!parsedUrl.hostname || parsedUrl.hostname.length === 0) {
+      return false;
+    }
+
+    // Block potentially malicious domains
+    const hostname = parsedUrl.hostname.toLowerCase();
+    const blockedDomains = [
+      'localhost',
+      '127.0.0.1',
+      '0.0.0.0',
+      '::1',
+      'metadata.google.internal',
+      '169.254.169.254', // AWS metadata
+    ];
+
+    if (blockedDomains.some(blocked => hostname === blocked || hostname.endsWith('.' + blocked))) {
+      return false;
+    }
+
+    // Block private IP ranges
+    if (hostname.match(/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|127\.)/)) {
+      return false;
+    }
+
+    // Ensure pathname is present (not just a domain)
+    if (!parsedUrl.pathname || parsedUrl.pathname === '/') {
+      return false;
+    }
+
+    return true;
+  } catch {
+    return false;
   }
 }

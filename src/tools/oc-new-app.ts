@@ -226,8 +226,23 @@ async function createNamespaceIfNotExists(
 
 function extractAppNameFromGitUrl(gitUrl: string): string {
   try {
+    // Validate URL format and ensure it's a safe Git repository URL
+    if (!isValidGitUrl(gitUrl)) {
+      throw new Error('Invalid Git URL format');
+    }
+
     const url = new URL(gitUrl);
-    const pathParts = url.pathname.split('/');
+    
+    // Additional security checks
+    if (!url.pathname || url.pathname === '/') {
+      throw new Error('Invalid Git URL: missing repository path');
+    }
+
+    const pathParts = url.pathname.split('/').filter(part => part.length > 0);
+    if (pathParts.length === 0) {
+      throw new Error('Invalid Git URL: no repository name found');
+    }
+
     let repoName = pathParts[pathParts.length - 1];
 
     // Remove .git extension if present
@@ -235,10 +250,65 @@ function extractAppNameFromGitUrl(gitUrl: string): string {
       repoName = repoName.slice(0, -4);
     }
 
+    // Ensure we have a valid repository name
+    if (!repoName || repoName.length === 0) {
+      throw new Error('Invalid Git URL: empty repository name');
+    }
+
     // Replace invalid characters for OpenShift resource names
-    return repoName.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+    // Only allow lowercase letters, numbers, and hyphens
+    const sanitizedName = repoName.toLowerCase().replace(/[^a-z0-9-]/g, '-');
+    
+    // Ensure the name doesn't start or end with hyphens
+    const cleanName = sanitizedName.replace(/^-+|-+$/g, '');
+    
+    // Ensure we still have a valid name after sanitization
+    if (!cleanName || cleanName.length === 0) {
+      throw new Error('Invalid Git URL: repository name contains no valid characters');
+    }
+
+    return cleanName;
   } catch {
+    // Secure fallback - return a safe default name
     return 'my-app';
+  }
+}
+
+function isValidGitUrl(url: string): boolean {
+  try {
+    // Basic URL format validation
+    if (!url || typeof url !== 'string' || url.trim().length === 0) {
+      return false;
+    }
+
+    // Check for common Git URL patterns
+    const gitUrlPattern = /^https?:\/\/[a-zA-Z0-9.-]+\/[a-zA-Z0-9._/-]+\.git$|^https?:\/\/[a-zA-Z0-9.-]+\/[a-zA-Z0-9._/-]+\/?$/;
+    
+    if (!gitUrlPattern.test(url.trim())) {
+      return false;
+    }
+
+    // Additional validation using URL constructor
+    const parsedUrl = new URL(url.trim());
+    
+    // Ensure it's HTTP or HTTPS
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+      return false;
+    }
+
+    // Ensure hostname is present and valid
+    if (!parsedUrl.hostname || parsedUrl.hostname.length === 0) {
+      return false;
+    }
+
+    // Ensure pathname is present
+    if (!parsedUrl.pathname || parsedUrl.pathname === '/') {
+      return false;
+    }
+
+    return true;
+  } catch {
+    return false;
   }
 }
 
