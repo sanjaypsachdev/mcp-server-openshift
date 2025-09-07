@@ -1,0 +1,407 @@
+name: CI Pipeline
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize, reopened ]
+  push:
+    branches: [ main ]
+
+env:
+  NODE_VERSION: '18'
+  CACHE_KEY_PREFIX: 'node-cache-v1'
+
+jobs:
+  # Stage 1: Code Quality & Security Checks
+  code-quality:
+    name: Code Quality & Security
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Fetch full history for better analysis
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+        continue-on-error: false
+
+      - name: Run Prettier check
+        run: npx prettier --check "src/**/*.{ts,js,json}" "tests/**/*.{ts,js}" "*.{json,md}"
+        continue-on-error: false
+
+      - name: Check TypeScript compilation
+        run: npx tsc --noEmit
+
+      - name: Audit dependencies for vulnerabilities
+        run: npm audit --audit-level=moderate
+
+      - name: Check for outdated dependencies
+        run: npm outdated || true
+
+  # Stage 2: Testing
+  test:
+    name: Unit & Integration Tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20, 21]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+        env:
+          CI: true
+
+      - name: Generate test coverage
+        run: npm run test:coverage
+        continue-on-error: true
+
+      - name: Upload coverage to Codecov
+        if: matrix.node-version == 18
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+
+  # Stage 3: Build & Package
+  build:
+    name: Build & Package
+    runs-on: ubuntu-latest
+    needs: [code-quality, test]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+
+      - name: Check build output
+        run: |
+          echo "Build artifacts:"
+          ls -la dist/
+          echo "Package size:"
+          du -sh dist/
+
+      - name: Validate package.json
+        run: npm pack --dry-run
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifacts-${{ github.sha }}
+          path: |
+            dist/
+            package.json
+            package-lock.json
+          retention-days: 7
+
+  # Stage 4: Integration Testing (with OpenShift CLI)
+  integration-test:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [build]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install OpenShift CLI
+        run: |
+          curl -LO https://mirror.openshift.com/pub/openshift-v4/clients/ocp/stable/openshift-client-linux.tar.gz
+          tar -xzf openshift-client-linux.tar.gz
+          sudo mv oc /usr/local/bin/
+          oc version --client
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-${{ github.sha }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run integration tests
+        run: |
+          # Test CLI availability
+          oc version --client
+          
+          # Test server startup (STDIO mode)
+          timeout 10s node dist/index.js --help || true
+          
+          # Test server startup (HTTP mode)
+          timeout 10s node dist/index.js --http --port=3001 &
+          sleep 5
+          curl -f http://localhost:3001/health || echo "HTTP server test completed"
+          pkill -f "node dist/index.js" || true
+
+  # Stage 5: Security Scanning
+  security:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    needs: [code-quality]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Snyk security scan
+        if: ${{ secrets.SNYK_TOKEN != '' }}
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+
+      - name: Skip Snyk scan (no token)
+        if: ${{ secrets.SNYK_TOKEN == '' }}
+        run: echo "⚠️ Skipping Snyk scan - SNYK_TOKEN not configured"
+
+      - name: Run npm audit
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
+      - name: Scan for secrets
+        uses: trufflesecurity/trufflehog@main
+        continue-on-error: true
+        with:
+          path: ./
+          base: main
+          head: HEAD
+
+  # Stage 6: Documentation & Validation
+  documentation:
+    name: Documentation & Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate README links
+        run: |
+          # Install markdown link checker
+          npm install -g markdown-link-check
+          markdown-link-check README.md --config .github/workflows/mlc-config.json || true
+
+      - name: Generate TypeDoc documentation
+        run: |
+          npx typedoc --out docs src/index.ts
+          echo "Documentation generated successfully"
+        continue-on-error: true
+
+      - name: Validate package.json structure
+        run: |
+          node -e "
+            const pkg = require('./package.json');
+            const required = ['name', 'version', 'description', 'main', 'scripts', 'dependencies'];
+            required.forEach(field => {
+              if (!pkg[field]) throw new Error(\`Missing required field: \${field}\`);
+            });
+            console.log('package.json validation passed');
+          "
+
+      - name: Check manifest.json validity
+        run: |
+          node -e "
+            const manifest = require('./manifest.json');
+            if (!manifest.name || !manifest.capabilities) {
+              throw new Error('Invalid manifest.json structure');
+            }
+            console.log('manifest.json validation passed');
+          "
+
+  # Stage 7: Performance Testing
+  performance:
+    name: Performance Testing
+    runs-on: ubuntu-latest
+    needs: [build]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts-${{ github.sha }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run performance benchmarks
+        run: |
+          # Test startup time
+          echo "Testing server startup time..."
+          time timeout 5s node dist/index.js --help
+          
+          # Test memory usage
+          echo "Testing memory usage..."
+          node -e "
+            console.log('Initial memory:', process.memoryUsage());
+            require('./dist/index.js');
+            console.log('After require:', process.memoryUsage());
+          " || true
+
+      - name: Bundle size analysis
+        run: |
+          echo "Analyzing bundle size..."
+          du -sh dist/
+          find dist/ -name "*.js" -exec wc -l {} + | sort -n
+          echo "Largest files in dist:"
+          find dist/ -type f -exec ls -lh {} + | sort -k5 -hr | head -10
+
+  # Stage 8: Final Validation & Summary
+  final-validation:
+    name: Final Validation
+    runs-on: ubuntu-latest
+    needs: [code-quality, test, build, integration-test, security, documentation, performance]
+    if: always()
+    
+    steps:
+      - name: Check job statuses
+        run: |
+          echo "Job Status Summary:"
+          echo "Code Quality: ${{ needs.code-quality.result }}"
+          echo "Tests: ${{ needs.test.result }}"
+          echo "Build: ${{ needs.build.result }}"
+          echo "Integration Tests: ${{ needs.integration-test.result }}"
+          echo "Security: ${{ needs.security.result }}"
+          echo "Documentation: ${{ needs.documentation.result }}"
+          echo "Performance: ${{ needs.performance.result }}"
+
+      - name: Validate all critical jobs passed
+        run: |
+          echo "Validating critical pipeline stages..."
+          
+          # Check critical jobs (these must pass)
+          critical_failed=false
+          
+          if [[ "${{ needs.code-quality.result }}" != "success" ]]; then
+            echo "❌ Code quality checks failed: ${{ needs.code-quality.result }}"
+            critical_failed=true
+          fi
+          
+          if [[ "${{ needs.test.result }}" != "success" ]]; then
+            echo "❌ Tests failed: ${{ needs.test.result }}"
+            critical_failed=true
+          fi
+          
+          if [[ "${{ needs.build.result }}" != "success" ]]; then
+            echo "❌ Build failed: ${{ needs.build.result }}"
+            critical_failed=true
+          fi
+          
+          # Report on non-critical jobs (these can fail without blocking)
+          echo "Non-critical job statuses:"
+          echo "- Integration Tests: ${{ needs.integration-test.result }}"
+          echo "- Security: ${{ needs.security.result }}"
+          echo "- Documentation: ${{ needs.documentation.result }}"
+          echo "- Performance: ${{ needs.performance.result }}"
+          
+          if [[ "$critical_failed" == "true" ]]; then
+            echo "❌ One or more critical pipeline stages failed"
+            exit 1
+          fi
+          
+          echo "✅ All critical pipeline stages passed successfully"
+
+      - name: PR Status Comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const jobs = [
+              { name: 'Code Quality', status: '${{ needs.code-quality.result }}' },
+              { name: 'Tests', status: '${{ needs.test.result }}' },
+              { name: 'Build', status: '${{ needs.build.result }}' },
+              { name: 'Integration Tests', status: '${{ needs.integration-test.result }}' },
+              { name: 'Security', status: '${{ needs.security.result }}' },
+              { name: 'Documentation', status: '${{ needs.documentation.result }}' },
+              { name: 'Performance', status: '${{ needs.performance.result }}' }
+            ];
+            
+            const passed = jobs.filter(j => j.status === 'success').length;
+            const failed = jobs.filter(j => j.status === 'failure').length;
+            const skipped = jobs.filter(j => j.status === 'skipped').length;
+            
+            const statusEmoji = failed === 0 ? '✅' : '❌';
+            const summary = `${statusEmoji} **CI Pipeline Results**\n\n` +
+              `- ✅ Passed: ${passed}\n` +
+              `- ❌ Failed: ${failed}\n` +
+              `- ⏭️ Skipped: ${skipped}\n\n` +
+              `**Job Details:**\n` +
+              jobs.map(j => `- ${j.status === 'success' ? '✅' : j.status === 'failure' ? '❌' : '⏭️'} ${j.name}`).join('\n');
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });
