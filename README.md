@@ -34,7 +34,7 @@ https://github.com/user-attachments/assets/f4bace3f-755b-462f-8a8a-680e4dc02129
 ## Installation
 
 ```bash
-git clone https://github.com/your-org/mcp-server-openshift.git
+git clone https://github.com/sanjaypsachdev/mcp-server-openshift.git
 cd mcp-server-openshift
 npm install
 npm run build
