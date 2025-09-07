@@ -53,6 +53,10 @@
         "description": "Get logs from OpenShift resources"
       },
       {
+        "name": "oc_patch",
+        "description": "Patch OpenShift resources with strategic merge, JSON merge, or JSON patch operations"
+      },
+      {
         "name": "oc_rollout",
         "description": "Manage rollouts of OpenShift deploymentconfigs"
       },
