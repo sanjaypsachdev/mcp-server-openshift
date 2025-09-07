@@ -245,9 +245,9 @@ function extractAppNameFromGitUrl(gitUrl: string): string {
 
     let repoName = pathParts[pathParts.length - 1];
 
-    // Remove .git extension if present
-    if (repoName.endsWith('.git')) {
-      repoName = repoName.slice(0, -4);
+    // Remove .git extension if present (secure validation)
+    if (repoName.length > 4 && repoName.substring(repoName.length - 4) === '.git') {
+      repoName = repoName.substring(0, repoName.length - 4);
     }
 
     // Ensure we have a valid repository name

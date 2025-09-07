@@ -211,7 +211,7 @@ function getNodeRole(node: any): string {
   }
 
   // Check for any node-role labels
-  const roleLabels = Object.keys(labels).filter(key => key.startsWith('node-role.kubernetes.io/'));
+  const roleLabels = Object.keys(labels).filter(key => isValidNodeRoleLabel(key));
   if (roleLabels.length > 0) {
     return roleLabels.map(label => label.replace('node-role.kubernetes.io/', '')).join(',');
   }
@@ -230,4 +230,21 @@ function getNodeStatus(node: any): string {
   } else {
     return 'Unknown';
   }
+}
+
+function isValidNodeRoleLabel(key: string): boolean {
+  // Exact match for the node-role.kubernetes.io prefix to prevent subdomain attacks
+  const nodeRolePrefix = 'node-role.kubernetes.io/';
+  
+  // Ensure exact prefix match and validate the role name
+  if (!key.startsWith(nodeRolePrefix)) {
+    return false;
+  }
+  
+  // Extract the role name after the prefix
+  const roleName = key.substring(nodeRolePrefix.length);
+  
+  // Validate that the role name contains only safe characters
+  const validRolePattern = /^[a-z0-9-]+$/;
+  return validRolePattern.test(roleName) && roleName.length > 0;
 }

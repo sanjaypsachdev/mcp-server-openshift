@@ -169,7 +169,7 @@ function generateHumanReadableSummary(resource: any, resourceType: string): stri
     const importantAnnotations = Object.entries(metadata.annotations)
       .filter(
         ([key]) =>
-          !key.startsWith('kubectl.kubernetes.io') && !key.startsWith('deployment.kubernetes.io')
+          !isKubernetesSystemAnnotation(key)
       )
       .slice(0, 3);
     if (importantAnnotations.length > 0) {
@@ -451,4 +451,26 @@ function generateGenericSummary(spec: any, status: any): string[] {
   }
 
   return summary;
+}
+
+function isKubernetesSystemAnnotation(key: string): boolean {
+  // List of exact Kubernetes system annotation prefixes
+  const systemAnnotationPrefixes = [
+    'kubectl.kubernetes.io/',
+    'deployment.kubernetes.io/',
+    'kubernetes.io/',
+    'openshift.io/',
+    'image.openshift.io/',
+    'alpha.image.policy.openshift.io/',
+    'build.openshift.io/',
+    'apps.openshift.io/',
+    'template.openshift.io/',
+    'operator.openshift.io/',
+  ];
+
+  // Use exact prefix matching to prevent subdomain attacks
+  return systemAnnotationPrefixes.some(prefix => {
+    // Ensure exact prefix match, not just substring
+    return key === prefix.slice(0, -1) || key.startsWith(prefix);
+  });
 }
