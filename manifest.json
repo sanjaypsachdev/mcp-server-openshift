@@ -64,6 +64,33 @@
         "name": "oc_expose",
         "description": "Expose OpenShift services as routes"
       }
+    ],
+    "prompts": [
+      {
+        "name": "troubleshoot-pod-prompt",
+        "description": "Comprehensive pod troubleshooting guide for OpenShift clusters"
+      },
+      {
+        "name": "monitoring-prompts",
+        "description": "Comprehensive monitoring and observability guidance for OpenShift clusters"
+      }
+    ],
+    "resources": [
+      {
+        "uri": "openshift://cluster-info",
+        "name": "OpenShift Cluster Information",
+        "description": "Comprehensive information about the OpenShift cluster including version, nodes, and status"
+      },
+      {
+        "uri": "openshift://project-list", 
+        "name": "OpenShift Project List",
+        "description": "Comprehensive list of all projects/namespaces with detailed information, quotas, and usage statistics"
+      },
+      {
+        "uri": "openshift://app-templates",
+        "name": "OpenShift Application Templates", 
+        "description": "Comprehensive collection of application deployment templates for common OpenShift scenarios and frameworks"
+      }
     ]
   },
   "requirements": {
