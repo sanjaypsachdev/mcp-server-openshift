@@ -167,10 +167,7 @@ function generateHumanReadableSummary(resource: any, resourceType: string): stri
   // Annotations (show only important ones)
   if (metadata.annotations) {
     const importantAnnotations = Object.entries(metadata.annotations)
-      .filter(
-        ([key]) =>
-          !isKubernetesSystemAnnotation(key)
-      )
+      .filter(([key]) => !isKubernetesSystemAnnotation(key))
       .slice(0, 3);
     if (importantAnnotations.length > 0) {
       summary.push(

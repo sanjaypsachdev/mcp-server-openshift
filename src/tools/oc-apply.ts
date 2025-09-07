@@ -773,7 +773,7 @@ function isValidManifestUrl(url: string): boolean {
 
     // Parse the URL
     const parsedUrl = new URL(url.trim());
-    
+
     // Only allow HTTPS for security
     if (parsedUrl.protocol !== 'https:') {
       return false;

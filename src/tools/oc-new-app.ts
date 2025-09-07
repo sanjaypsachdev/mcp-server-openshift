@@ -232,7 +232,7 @@ function extractAppNameFromGitUrl(gitUrl: string): string {
     }
 
     const url = new URL(gitUrl);
-    
+
     // Additional security checks
     if (!url.pathname || url.pathname === '/') {
       throw new Error('Invalid Git URL: missing repository path');
@@ -258,10 +258,10 @@ function extractAppNameFromGitUrl(gitUrl: string): string {
     // Replace invalid characters for OpenShift resource names
     // Only allow lowercase letters, numbers, and hyphens
     const sanitizedName = repoName.toLowerCase().replace(/[^a-z0-9-]/g, '-');
-    
+
     // Ensure the name doesn't start or end with hyphens
     const cleanName = sanitizedName.replace(/^-+|-+$/g, '');
-    
+
     // Ensure we still have a valid name after sanitization
     if (!cleanName || cleanName.length === 0) {
       throw new Error('Invalid Git URL: repository name contains no valid characters');
@@ -282,15 +282,16 @@ function isValidGitUrl(url: string): boolean {
     }
 
     // Check for common Git URL patterns
-    const gitUrlPattern = /^https?:\/\/[a-zA-Z0-9.-]+\/[a-zA-Z0-9._/-]+\.git$|^https?:\/\/[a-zA-Z0-9.-]+\/[a-zA-Z0-9._/-]+\/?$/;
-    
+    const gitUrlPattern =
+      /^https?:\/\/[a-zA-Z0-9.-]+\/[a-zA-Z0-9._/-]+\.git$|^https?:\/\/[a-zA-Z0-9.-]+\/[a-zA-Z0-9._/-]+\/?$/;
+
     if (!gitUrlPattern.test(url.trim())) {
       return false;
     }
 
     // Additional validation using URL constructor
     const parsedUrl = new URL(url.trim());
-    
+
     // Ensure it's HTTP or HTTPS
     if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
       return false;

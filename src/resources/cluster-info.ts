@@ -235,15 +235,15 @@ function getNodeStatus(node: any): string {
 function isValidNodeRoleLabel(key: string): boolean {
   // Exact match for the node-role.kubernetes.io prefix to prevent subdomain attacks
   const nodeRolePrefix = 'node-role.kubernetes.io/';
-  
+
   // Ensure exact prefix match and validate the role name
   if (!key.startsWith(nodeRolePrefix)) {
     return false;
   }
-  
+
   // Extract the role name after the prefix
   const roleName = key.substring(nodeRolePrefix.length);
-  
+
   // Validate that the role name contains only safe characters
   const validRolePattern = /^[a-z0-9-]+$/;
   return validRolePattern.test(roleName) && roleName.length > 0;
