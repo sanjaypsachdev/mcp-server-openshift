@@ -1,7 +1,7 @@
 # OpenShift MCP Server
 
-[![CI Pipeline](https://github.com/sanjaypsachdev/mcp-server-openshift/actions/workflows/ci.yml/badge.svg)](https://github.com/sanjaypsachdev/mcp-server-openshift/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/sanjaypsachdev/mcp-server-openshift/actions/workflows/codeql.yml/badge.svg)](https://github.com/sanjaypsachdev/mcp-server-openshift/actions/workflows/codeql.yml)
+[![CI Pipeline](https://github.com/sanjaypsachdev/mcp-server-openshift/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/sanjaypsachdev/mcp-server-openshift/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/sanjaypsachdev/mcp-server-openshift/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/sanjaypsachdev/mcp-server-openshift/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5.0-blue.svg)](https://www.typescriptlang.org/)

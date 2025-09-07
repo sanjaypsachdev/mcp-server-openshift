@@ -161,7 +161,7 @@ jobs:
     name: Publish to npm
     runs-on: ubuntu-latest
     needs: release
-    if: github.repository == 'your-org/mcp-server-openshift'  # Only publish from main repo
+    if: github.repository == 'sanjaypsachdev/mcp-server-openshift'  # Only publish from main repo
     
     steps:
       - name: Checkout code
