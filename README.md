@@ -74,6 +74,7 @@ npx -y mcp-remote http://localhost:3000/sse --transport sse-only
 ## Tools
 
 ### Core Resource Management
+
 - **`oc_get`** - Get OpenShift resources (pods, deployments, services, routes, etc.)
 - **`oc_create`** - Create OpenShift resources from manifests or templates
 - **`oc_apply`** - Apply YAML manifests with validation and conflict resolution
@@ -82,11 +83,13 @@ npx -y mcp-remote http://localhost:3000/sse --transport sse-only
 - **`oc_describe`** - Describe resources with multiple output formats
 
 ### Application Lifecycle
+
 - **`oc_new_app`** - Deploy applications from Git repositories with S2I builds
 - **`oc_scale`** - Scale deployments, deploymentconfigs, replicasets, and statefulsets
 - **`oc_logs`** - Get logs from pods, deployments, builds with filtering options
 
 ### Advanced Operations
+
 - **`oc_install_operator`** - Install operators via OLM, Helm, or direct manifests
 
 ## Resources
@@ -113,25 +116,29 @@ Intelligent log analysis and pattern detection:
 ## Usage Examples
 
 ### Deploy Application
+
 ```bash
 # Deploy Node.js app from GitHub
 oc_new_app with gitRepo: "https://github.com/sclorg/nodejs-ex.git"
 ```
 
 ### Scale Application
+
 ```bash
 # Scale deployment to 3 replicas
 oc_scale with name: "my-app", replicas: 3
 ```
 
 ### Patch Resource
+
 ```bash
 # Update deployment labels
-oc_patch with resourceType: "deployment", name: "my-app", 
+oc_patch with resourceType: "deployment", name: "my-app",
          patch: '{"metadata":{"labels":{"environment":"production"}}}'
 ```
 
 ### Troubleshoot Pod
+
 ```bash
 # Get troubleshooting guidance
 Use prompt: troubleshoot-pod-prompt
@@ -163,11 +170,13 @@ npm run dev
 ## Transport Modes
 
 ### STDIO (Default)
+
 - Direct MCP client integration
 - Lower latency
 - Recommended for local development
 
 ### HTTP/SSE
+
 - Remote access capability
 - Web integration friendly
 - Container deployment ready

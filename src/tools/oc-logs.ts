@@ -4,7 +4,8 @@ import { OpenShiftManager } from '../utils/openshift-manager.js';
 
 export const ocLogsTool: Tool = {
   name: 'oc_logs',
-  description: 'Get logs from OpenShift resources like pods, deployments, builds, etc. with advanced filtering and streaming options',
+  description:
+    'Get logs from OpenShift resources like pods, deployments, builds, etc. with advanced filtering and streaming options',
   inputSchema: {
     type: 'object',
     properties: {
@@ -12,103 +13,107 @@ export const ocLogsTool: Tool = {
         type: 'string',
         enum: ['pod', 'deploymentconfig', 'deployment', 'build', 'buildconfig', 'job'],
         default: 'pod',
-        description: 'Type of resource to get logs from'
+        description: 'Type of resource to get logs from',
       },
       name: {
         type: 'string',
-        description: 'Name of the resource'
+        description: 'Name of the resource',
       },
       namespace: {
         type: 'string',
         default: 'default',
-        description: 'OpenShift namespace/project'
+        description: 'OpenShift namespace/project',
       },
       context: {
         type: 'string',
         default: '',
-        description: 'OpenShift context to use (optional)'
+        description: 'OpenShift context to use (optional)',
       },
       container: {
         type: 'string',
-        description: 'Container name (for pods with multiple containers)'
+        description: 'Container name (for pods with multiple containers)',
       },
       follow: {
         type: 'boolean',
         default: false,
-        description: 'Follow logs output (stream live logs)'
+        description: 'Follow logs output (stream live logs)',
       },
       previous: {
         type: 'boolean',
         default: false,
-        description: 'Show logs from previous terminated container'
+        description: 'Show logs from previous terminated container',
       },
       since: {
         type: 'string',
-        description: 'Show logs since relative time (e.g. 5s, 2m, 3h) or absolute time'
+        description: 'Show logs since relative time (e.g. 5s, 2m, 3h) or absolute time',
       },
       sinceTime: {
         type: 'string',
-        description: 'Show logs since absolute timestamp (RFC3339)'
+        description: 'Show logs since absolute timestamp (RFC3339)',
       },
       tail: {
         type: 'number',
         minimum: 0,
-        description: 'Number of lines to show from end of logs (-1 for all)'
+        description: 'Number of lines to show from end of logs (-1 for all)',
       },
       timestamps: {
         type: 'boolean',
         default: false,
-        description: 'Include timestamps in log output'
+        description: 'Include timestamps in log output',
       },
       limitBytes: {
         type: 'number',
         minimum: 1,
-        description: 'Maximum bytes to return'
+        description: 'Maximum bytes to return',
       },
       allContainers: {
         type: 'boolean',
         default: false,
-        description: 'Get logs from all containers in the pod'
+        description: 'Get logs from all containers in the pod',
       },
       selector: {
         type: 'string',
-        description: 'Label selector to filter pods'
+        description: 'Label selector to filter pods',
       },
       maxLogRequests: {
         type: 'number',
         minimum: 1,
         maximum: 20,
         default: 5,
-        description: 'Maximum number of concurrent log requests when using selectors'
-      }
+        description: 'Maximum number of concurrent log requests when using selectors',
+      },
     },
-    required: ['name']
-  }
+    required: ['name'],
+  },
 };
 
 export async function handleOcLogs(params: OcLogsParams) {
   const manager = OpenShiftManager.getInstance();
   const progressLog: string[] = [];
   const startTime = Date.now();
-  
+
   // Helper function to add progress logs with timestamps
   function addProgress(message: string, level: 'INFO' | 'SUCCESS' | 'WARNING' | 'ERROR' = 'INFO') {
     const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
     progressLog.push(`[${elapsed}s] ${level}: ${message}`);
   }
-  
+
   try {
     const validated = OcLogsSchema.parse(params);
     addProgress('📋 Starting log retrieval operation');
-    
+
     // Validate input parameters
     const validationResult = validateLogsParameters(validated);
     if (!validationResult.valid) {
       addProgress(`❌ Parameter validation failed: ${validationResult.error}`, 'ERROR');
-      return formatErrorResponse(progressLog, 'Parameter validation failed', validationResult.error);
+      return formatErrorResponse(
+        progressLog,
+        'Parameter validation failed',
+        validationResult.error
+      );
     }
     addProgress('✅ Parameters validated successfully');
-    
+
     // Check resource availability and get container info
     addProgress('🔍 Discovering target resources...');
     const resourceInfo = await discoverLogResources(manager, validated);
@@ -116,44 +121,58 @@ export async function handleOcLogs(params: OcLogsParams) {
       addProgress(`❌ Resource not available: ${resourceInfo.error}`, 'ERROR');
       return formatErrorResponse(progressLog, 'Resource not available', resourceInfo.error);
     }
-    
+
     addProgress(`📦 Found resource: ${resourceInfo.kind}/${resourceInfo.name}`);
     if (resourceInfo.containers && resourceInfo.containers.length > 0) {
       addProgress(`📋 Available containers: ${resourceInfo.containers.join(', ')}`);
     }
-    
+
     // Validate container selection for multi-container resources
-    if (resourceInfo.containers && resourceInfo.containers.length > 1 && !validated.container && !validated.allContainers) {
+    if (
+      resourceInfo.containers &&
+      resourceInfo.containers.length > 1 &&
+      !validated.container &&
+      !validated.allContainers
+    ) {
       addProgress('⚠️  Multiple containers found - container selection required', 'WARNING');
       return formatContainerSelectionResponse(progressLog, resourceInfo, validated);
     }
-    
+
     // Build logs command
     addProgress('🔨 Building logs command...');
     const logsCommands = buildLogsCommands(validated, resourceInfo);
     addProgress(`📝 Commands to execute: ${logsCommands.length}`);
-    
+
     // Execute log retrieval
     addProgress('📜 Retrieving logs...');
     const logResults = await executeLogsCommands(manager, logsCommands, validated);
-    
+
     if (logResults.length === 0) {
       addProgress('📭 No logs found', 'WARNING');
       return formatNoLogsResponse(progressLog, validated);
     }
-    
+
     // Process and format results
     const processedLogs = processLogResults(logResults, validated);
-    addProgress(`✅ Retrieved ${processedLogs.totalLines} lines from ${processedLogs.sources.length} source(s)`, 'SUCCESS');
-    
+    addProgress(
+      `✅ Retrieved ${processedLogs.totalLines} lines from ${processedLogs.sources.length} source(s)`,
+      'SUCCESS'
+    );
+
     const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
     addProgress(`🎉 Log retrieval completed successfully in ${totalTime}s`, 'SUCCESS');
-    
+
     return formatSuccessResponse(progressLog, validated, processedLogs, resourceInfo);
-    
   } catch (error) {
-    addProgress(`💥 Unexpected error: ${error instanceof Error ? error.message : String(error)}`, 'ERROR');
-    return formatErrorResponse(progressLog, 'Unexpected error occurred', error instanceof Error ? error.message : String(error));
+    addProgress(
+      `💥 Unexpected error: ${error instanceof Error ? error.message : String(error)}`,
+      'ERROR'
+    );
+    return formatErrorResponse(
+      progressLog,
+      'Unexpected error occurred',
+      error instanceof Error ? error.message : String(error)
+    );
   }
 }
 
@@ -162,62 +181,66 @@ export function validateLogsParameters(params: OcLogsParams): { valid: boolean; 
   if (params.since && params.sinceTime) {
     return {
       valid: false,
-      error: 'Cannot specify both "since" and "sinceTime" - choose one'
+      error: 'Cannot specify both "since" and "sinceTime" - choose one',
     };
   }
-  
+
   // Validate since format if provided
   if (params.since && !params.since.match(/^\d+[smhd]$/) && !isValidAbsoluteTime(params.since)) {
     return {
       valid: false,
-      error: 'Since must be in format: <number><unit> (e.g., "5s", "2m", "3h", "1d") or absolute time'
+      error:
+        'Since must be in format: <number><unit> (e.g., "5s", "2m", "3h", "1d") or absolute time',
     };
   }
-  
+
   // Validate sinceTime format if provided
   if (params.sinceTime && !isValidRFC3339(params.sinceTime)) {
     return {
       valid: false,
-      error: 'sinceTime must be in RFC3339 format (e.g., "2023-01-01T12:00:00Z")'
+      error: 'sinceTime must be in RFC3339 format (e.g., "2023-01-01T12:00:00Z")',
     };
   }
-  
+
   // Validate tail value
   if (params.tail !== undefined && params.tail < -1) {
     return {
       valid: false,
-      error: 'tail must be >= -1 (-1 for all lines, 0+ for specific number of lines)'
+      error: 'tail must be >= -1 (-1 for all lines, 0+ for specific number of lines)',
     };
   }
-  
+
   // Cannot use previous with follow
   if (params.previous && params.follow) {
     return {
       valid: false,
-      error: 'Cannot use "previous" and "follow" together - previous containers cannot stream'
+      error: 'Cannot use "previous" and "follow" together - previous containers cannot stream',
     };
   }
-  
+
   // allContainers only works with pods
   if (params.allContainers && params.resourceType !== 'pod') {
     return {
       valid: false,
-      error: 'allContainers option only works with resourceType "pod"'
+      error: 'allContainers option only works with resourceType "pod"',
     };
   }
-  
+
   // selector only works with pods
   if (params.selector && params.resourceType !== 'pod') {
     return {
       valid: false,
-      error: 'selector option only works with resourceType "pod"'
+      error: 'selector option only works with resourceType "pod"',
     };
   }
-  
+
   return { valid: true };
 }
 
-async function discoverLogResources(manager: OpenShiftManager, params: OcLogsParams): Promise<{
+async function discoverLogResources(
+  manager: OpenShiftManager,
+  params: OcLogsParams
+): Promise<{
   available: boolean;
   error?: string;
   kind?: string;
@@ -228,38 +251,55 @@ async function discoverLogResources(manager: OpenShiftManager, params: OcLogsPar
   try {
     // For selector-based queries, get list of pods
     if (params.selector) {
-      const getCommand = ['get', 'pods', '-l', params.selector, '-n', params.namespace, '-o', 'json'];
+      const getCommand = [
+        'get',
+        'pods',
+        '-l',
+        params.selector,
+        '-n',
+        params.namespace,
+        '-o',
+        'json',
+      ];
       const result = await manager.executeCommand(getCommand, { context: params.context });
-      
+
       if (!result.success) {
         return { available: false, error: `Failed to discover pods: ${result.error}` };
       }
-      
+
       const data = typeof result.data === 'string' ? JSON.parse(result.data) : result.data;
       if (!data.items || data.items.length === 0) {
         return { available: false, error: `No pods found matching selector: ${params.selector}` };
       }
-      
+
       return {
         available: true,
         kind: 'PodList',
         name: `${data.items.length} pods`,
-        containers: []
+        containers: [],
       };
     }
-    
+
     // For specific resource, get detailed info
-    const getCommand = ['get', params.resourceType, params.name, '-n', params.namespace, '-o', 'json'];
+    const getCommand = [
+      'get',
+      params.resourceType,
+      params.name,
+      '-n',
+      params.namespace,
+      '-o',
+      'json',
+    ];
     const result = await manager.executeCommand(getCommand, { context: params.context });
-    
+
     if (!result.success) {
       return { available: false, error: `Resource not found: ${result.error}` };
     }
-    
+
     const data = typeof result.data === 'string' ? JSON.parse(result.data) : result.data;
     const containers: string[] = [];
     let status = 'Unknown';
-    
+
     // Extract container info based on resource type
     if (params.resourceType === 'pod') {
       if (data.spec?.containers) {
@@ -272,19 +312,18 @@ async function discoverLogResources(manager: OpenShiftManager, params: OcLogsPar
       }
       status = `${data.status?.readyReplicas || 0}/${data.status?.replicas || 0} ready`;
     }
-    
+
     return {
       available: true,
       kind: data.kind,
       name: data.metadata?.name,
       containers,
-      status
+      status,
     };
-    
   } catch (error) {
-    return { 
-      available: false, 
-      error: `Discovery failed: ${error instanceof Error ? error.message : String(error)}` 
+    return {
+      available: false,
+      error: `Discovery failed: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
 }
@@ -297,20 +336,20 @@ interface LogCommand {
 
 function buildLogsCommands(params: OcLogsParams, resourceInfo: any): LogCommand[] {
   const commands: LogCommand[] = [];
-  
+
   if (params.selector) {
     // For selector-based queries, we'll build a single command
     const args = ['logs', '-l', params.selector];
-    
+
     if (params.namespace) {
       args.push('-n', params.namespace);
     }
-    
+
     addCommonLogsArgs(args, params);
-    
+
     commands.push({
       command: args,
-      source: `selector:${params.selector}`
+      source: `selector:${params.selector}`,
     });
   } else {
     // For specific resources
@@ -318,42 +357,42 @@ function buildLogsCommands(params: OcLogsParams, resourceInfo: any): LogCommand[
       // Create command for each container
       resourceInfo.containers.forEach((container: string) => {
         const args = ['logs', params.resourceType, params.name];
-        
+
         if (params.namespace) {
           args.push('-n', params.namespace);
         }
-        
+
         args.push('-c', container);
         addCommonLogsArgs(args, params);
-        
+
         commands.push({
           command: args,
           source: `${params.resourceType}/${params.name}`,
-          container
+          container,
         });
       });
     } else {
       // Single command
       const args = ['logs', params.resourceType, params.name];
-      
+
       if (params.namespace) {
         args.push('-n', params.namespace);
       }
-      
+
       if (params.container) {
         args.push('-c', params.container);
       }
-      
+
       addCommonLogsArgs(args, params);
-      
+
       commands.push({
         command: args,
         source: `${params.resourceType}/${params.name}`,
-        container: params.container
+        container: params.container,
       });
     }
   }
-  
+
   return commands;
 }
 
@@ -361,35 +400,35 @@ function addCommonLogsArgs(args: string[], params: OcLogsParams): void {
   if (params.follow) {
     args.push('-f');
   }
-  
+
   if (params.previous) {
     args.push('-p');
   }
-  
+
   if (params.since) {
     args.push('--since', params.since);
   }
-  
+
   if (params.sinceTime) {
     args.push('--since-time', params.sinceTime);
   }
-  
+
   if (params.tail !== undefined) {
     args.push('--tail', params.tail.toString());
   }
-  
+
   if (params.timestamps) {
     args.push('--timestamps');
   }
-  
+
   if (params.limitBytes) {
     args.push('--limit-bytes', params.limitBytes.toString());
   }
-  
+
   if (params.allContainers && !params.container) {
     args.push('--all-containers');
   }
-  
+
   if (params.maxLogRequests && params.selector) {
     args.push('--max-log-requests', params.maxLogRequests.toString());
   }
@@ -403,46 +442,50 @@ interface LogResult {
   container?: string;
 }
 
-async function executeLogsCommands(manager: OpenShiftManager, commands: LogCommand[], params: OcLogsParams): Promise<LogResult[]> {
+async function executeLogsCommands(
+  manager: OpenShiftManager,
+  commands: LogCommand[],
+  params: OcLogsParams
+): Promise<LogResult[]> {
   const results: LogResult[] = [];
-  
+
   // Execute commands concurrently (but respect maxLogRequests for selectors)
   const maxConcurrent = params.selector ? params.maxLogRequests || 5 : commands.length;
   const batches = [];
-  
+
   for (let i = 0; i < commands.length; i += maxConcurrent) {
     batches.push(commands.slice(i, i + maxConcurrent));
   }
-  
+
   for (const batch of batches) {
-    const batchPromises = batch.map(async (cmd) => {
+    const batchPromises = batch.map(async cmd => {
       try {
-        const result = await manager.executeCommand(cmd.command, { 
+        const result = await manager.executeCommand(cmd.command, {
           context: params.context,
-          timeout: params.follow ? undefined : 30000 // 30s timeout for non-streaming
+          timeout: params.follow ? undefined : 30000, // 30s timeout for non-streaming
         });
-        
+
         return {
           success: result.success,
           data: result.data,
           error: result.error,
           source: cmd.source,
-          container: cmd.container
+          container: cmd.container,
         };
       } catch (error) {
         return {
           success: false,
           error: error instanceof Error ? error.message : String(error),
           source: cmd.source,
-          container: cmd.container
+          container: cmd.container,
         };
       }
     });
-    
+
     const batchResults = await Promise.all(batchPromises);
     results.push(...batchResults);
   }
-  
+
   return results;
 }
 
@@ -465,33 +508,35 @@ function processLogResults(results: LogResult[], params: OcLogsParams): Processe
   let totalLines = 0;
   const sources = new Set<string>();
   const errors: string[] = [];
-  
+
   results.forEach(result => {
     if (result.success && result.data) {
       const lines = result.data.split('\n').filter(line => line.trim());
       const truncated = params.limitBytes ? result.data.length >= params.limitBytes : false;
-      
+
       logs.push({
         source: result.source,
         container: result.container,
         content: result.data,
         lines: lines.length,
-        truncated
+        truncated,
       });
-      
+
       totalLines += lines.length;
       sources.add(result.source);
     } else if (result.error) {
-      errors.push(`${result.source}${result.container ? ` (${result.container})` : ''}: ${result.error}`);
+      errors.push(
+        `${result.source}${result.container ? ` (${result.container})` : ''}: ${result.error}`
+      );
     }
   });
-  
+
   return {
     logs,
     totalLines,
     sources: Array.from(sources),
     hasErrors: errors.length > 0,
-    errors
+    errors,
   };
 }
 
@@ -509,7 +554,12 @@ function isValidRFC3339(timeStr: string): boolean {
   }
 }
 
-function formatSuccessResponse(progressLog: string[], params: OcLogsParams, processedLogs: ProcessedLogs, resourceInfo: any) {
+function formatSuccessResponse(
+  progressLog: string[],
+  params: OcLogsParams,
+  processedLogs: ProcessedLogs,
+  resourceInfo: any
+) {
   const response = [
     `# 📜 Logs Retrieved Successfully`,
     ``,
@@ -520,9 +570,9 @@ function formatSuccessResponse(progressLog: string[], params: OcLogsParams, proc
     `- **Sources**: ${processedLogs.sources.length}`,
     `- **Follow Mode**: ${params.follow ? 'Yes (streaming)' : 'No'}`,
     `- **Include Timestamps**: ${params.timestamps ? 'Yes' : 'No'}`,
-    ``
+    ``,
   ];
-  
+
   // Add container info if relevant
   if (resourceInfo.containers?.length > 1) {
     response.push(
@@ -532,7 +582,7 @@ function formatSuccessResponse(progressLog: string[], params: OcLogsParams, proc
       ``
     );
   }
-  
+
   // Add errors if any
   if (processedLogs.hasErrors) {
     response.push(
@@ -541,20 +591,15 @@ function formatSuccessResponse(progressLog: string[], params: OcLogsParams, proc
       ``
     );
   }
-  
+
   // Add log content
   response.push(`## 📜 Log Content`);
-  
+
   if (processedLogs.logs.length === 1) {
     // Single source
     const log = processedLogs.logs[0];
-    response.push(
-      ``,
-      `\`\`\``,
-      log.content || '(no logs)',
-      `\`\`\``
-    );
-    
+    response.push(``, `\`\`\``, log.content || '(no logs)', `\`\`\``);
+
     if (log.truncated) {
       response.push(``, `⚠️  **Note**: Logs may be truncated due to size limits`);
     }
@@ -569,13 +614,13 @@ function formatSuccessResponse(progressLog: string[], params: OcLogsParams, proc
         log.content || '(no logs)',
         `\`\`\``
       );
-      
+
       if (log.truncated) {
         response.push(``, `⚠️  **Note**: Logs may be truncated due to size limits`);
       }
     });
   }
-  
+
   // Add progress log
   response.push(
     ``,
@@ -590,7 +635,7 @@ function formatSuccessResponse(progressLog: string[], params: OcLogsParams, proc
     `oc logs ${params.resourceType}/${params.name} -n ${params.namespace} -f`,
     ``
   );
-  
+
   if (resourceInfo.containers?.length > 1) {
     response.push(
       `# Specify container`,
@@ -598,7 +643,7 @@ function formatSuccessResponse(progressLog: string[], params: OcLogsParams, proc
       ``
     );
   }
-  
+
   response.push(
     `# Get previous container logs`,
     `oc logs ${params.resourceType}/${params.name} -n ${params.namespace} --previous`,
@@ -607,18 +652,22 @@ function formatSuccessResponse(progressLog: string[], params: OcLogsParams, proc
     `oc logs ${params.resourceType}/${params.name} -n ${params.namespace} --timestamps`,
     `\`\`\``
   );
-  
+
   return {
     content: [
       {
         type: 'text' as const,
-        text: response.join('\n')
-      }
-    ]
+        text: response.join('\n'),
+      },
+    ],
   };
 }
 
-function formatContainerSelectionResponse(progressLog: string[], resourceInfo: any, params: OcLogsParams) {
+function formatContainerSelectionResponse(
+  progressLog: string[],
+  resourceInfo: any,
+  params: OcLogsParams
+) {
   const response = [
     `# 🔍 Container Selection Required`,
     ``,
@@ -657,16 +706,16 @@ function formatContainerSelectionResponse(progressLog: string[], resourceInfo: a
     `## 📝 Progress Log`,
     `\`\`\``,
     ...progressLog,
-    `\`\`\``
+    `\`\`\``,
   ];
-  
+
   return {
     content: [
       {
         type: 'text' as const,
-        text: response.join('\n')
-      }
-    ]
+        text: response.join('\n'),
+      },
+    ],
   };
 }
 
@@ -697,16 +746,16 @@ function formatNoLogsResponse(progressLog: string[], params: OcLogsParams) {
     `- Check resource status: \`oc describe ${params.resourceType} ${params.name} -n ${params.namespace}\``,
     `- Check events: \`oc get events -n ${params.namespace} --sort-by='.lastTimestamp'\``,
     `- Try previous container logs: Add \`"previous": true\``,
-    `- Remove time filters to see all available logs`
+    `- Remove time filters to see all available logs`,
   ].filter(line => line !== '');
-  
+
   return {
     content: [
       {
         type: 'text' as const,
-        text: response.join('\n')
-      }
-    ]
+        text: response.join('\n'),
+      },
+    ],
   };
 }
 
@@ -728,16 +777,15 @@ function formatErrorResponse(progressLog: string[], errorTitle: string, errorDet
     `2. Check resource status: \`oc describe <resource> <name> -n <namespace>\``,
     `3. Verify container name (if specified): \`oc get <resource> <name> -o jsonpath='{.spec.containers[*].name}' -n <namespace>\``,
     `4. Check cluster connectivity: \`oc whoami\``,
-    `5. Verify namespace access: \`oc auth can-i get pods -n <namespace>\``
+    `5. Verify namespace access: \`oc auth can-i get pods -n <namespace>\``,
   ];
-  
+
   return {
     content: [
       {
         type: 'text' as const,
-        text: response.filter(line => line !== '').join('\n')
-      }
-    ]
+        text: response.filter(line => line !== '').join('\n'),
+      },
+    ],
   };
 }
-

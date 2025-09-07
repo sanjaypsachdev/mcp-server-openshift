@@ -12,19 +12,19 @@ export interface PodLogsSamplingRequest {
 
 export async function samplePodLogs(request: PodLogsSamplingRequest): Promise<string> {
   const manager = OpenShiftManager.getInstance();
-  const { 
-    podName, 
-    namespace, 
-    containerName, 
-    maxLines = 100, 
+  const {
+    podName,
+    namespace,
+    containerName,
+    maxLines = 100,
     since = '1h',
     includePrevious = true,
-    context 
+    context,
   } = request;
 
   try {
     const logSamples: string[] = [];
-    
+
     // Add header with sampling information
     logSamples.push(`# Pod Logs Sample Analysis`);
     logSamples.push(`# Pod: ${podName}`);
@@ -39,22 +39,25 @@ export async function samplePodLogs(request: PodLogsSamplingRequest): Promise<st
     // Sample current logs
     logSamples.push('## 📋 CURRENT CONTAINER LOGS');
     logSamples.push('');
-    
+
     const currentLogsArgs = [
-      'logs', 
-      podName, 
-      '-n', namespace,
-      '--tail', maxLines.toString(),
-      '--since', since,
-      '--timestamps'
+      'logs',
+      podName,
+      '-n',
+      namespace,
+      '--tail',
+      maxLines.toString(),
+      '--since',
+      since,
+      '--timestamps',
     ];
-    
+
     if (containerName) {
       currentLogsArgs.push('-c', containerName);
     }
-    
+
     const currentLogsResult = await manager.executeCommand(currentLogsArgs, { context });
-    
+
     if (currentLogsResult.success) {
       if (currentLogsResult.data && currentLogsResult.data.trim()) {
         logSamples.push('```');
@@ -66,29 +69,31 @@ export async function samplePodLogs(request: PodLogsSamplingRequest): Promise<st
     } else {
       logSamples.push(`*Error retrieving current logs: ${currentLogsResult.error}*`);
     }
-    
+
     logSamples.push('');
 
     // Sample previous logs if requested and available
     if (includePrevious) {
       logSamples.push('## 📜 PREVIOUS CONTAINER LOGS (Before Last Restart)');
       logSamples.push('');
-      
+
       const previousLogsArgs = [
-        'logs', 
-        podName, 
-        '-n', namespace,
+        'logs',
+        podName,
+        '-n',
+        namespace,
         '--previous',
-        '--tail', maxLines.toString(),
-        '--timestamps'
+        '--tail',
+        maxLines.toString(),
+        '--timestamps',
       ];
-      
+
       if (containerName) {
         previousLogsArgs.push('-c', containerName);
       }
-      
+
       const previousLogsResult = await manager.executeCommand(previousLogsArgs, { context });
-      
+
       if (previousLogsResult.success) {
         if (previousLogsResult.data && previousLogsResult.data.trim()) {
           logSamples.push('```');
@@ -100,20 +105,19 @@ export async function samplePodLogs(request: PodLogsSamplingRequest): Promise<st
       } else {
         logSamples.push(`*Previous logs not available: ${previousLogsResult.error}*`);
       }
-      
+
       logSamples.push('');
     }
 
     // Add pod status information for context
     logSamples.push('## 🔍 POD STATUS CONTEXT');
     logSamples.push('');
-    
-    const podStatusResult = await manager.executeCommand([
-      'get', 'pod', podName, 
-      '-n', namespace, 
-      '-o', 'jsonpath={.status.containerStatuses[*]}'
-    ], { context });
-    
+
+    const podStatusResult = await manager.executeCommand(
+      ['get', 'pod', podName, '-n', namespace, '-o', 'jsonpath={.status.containerStatuses[*]}'],
+      { context }
+    );
+
     if (podStatusResult.success && podStatusResult.data) {
       try {
         const containerStatuses = JSON.parse(`[${podStatusResult.data}]`);
@@ -123,13 +127,19 @@ export async function samplePodLogs(request: PodLogsSamplingRequest): Promise<st
           logSamples.push(`- **Ready**: ${status.ready ? 'Yes' : 'No'}`);
           logSamples.push(`- **Restart Count**: ${status.restartCount || 0}`);
           logSamples.push(`- **Image**: ${status.image || 'unknown'}`);
-          
+
           if (status.lastState && status.lastState.terminated) {
-            logSamples.push(`- **Last Exit Code**: ${status.lastState.terminated.exitCode || 'unknown'}`);
-            logSamples.push(`- **Last Exit Reason**: ${status.lastState.terminated.reason || 'unknown'}`);
-            logSamples.push(`- **Last Finished**: ${status.lastState.terminated.finishedAt || 'unknown'}`);
+            logSamples.push(
+              `- **Last Exit Code**: ${status.lastState.terminated.exitCode || 'unknown'}`
+            );
+            logSamples.push(
+              `- **Last Exit Reason**: ${status.lastState.terminated.reason || 'unknown'}`
+            );
+            logSamples.push(
+              `- **Last Finished**: ${status.lastState.terminated.finishedAt || 'unknown'}`
+            );
           }
-          
+
           logSamples.push('');
         });
       } catch (parseError) {
@@ -140,16 +150,24 @@ export async function samplePodLogs(request: PodLogsSamplingRequest): Promise<st
     // Add recent events for additional context
     logSamples.push('## 📅 RECENT EVENTS');
     logSamples.push('');
-    
-    const eventsResult = await manager.executeCommand([
-      'get', 'events', 
-      '-n', namespace,
-      '--field-selector', `involvedObject.name=${podName}`,
-      '--sort-by', '.lastTimestamp',
-      '-o', 'custom-columns=TIME:.lastTimestamp,TYPE:.type,REASON:.reason,MESSAGE:.message',
-      '--no-headers'
-    ], { context });
-    
+
+    const eventsResult = await manager.executeCommand(
+      [
+        'get',
+        'events',
+        '-n',
+        namespace,
+        '--field-selector',
+        `involvedObject.name=${podName}`,
+        '--sort-by',
+        '.lastTimestamp',
+        '-o',
+        'custom-columns=TIME:.lastTimestamp,TYPE:.type,REASON:.reason,MESSAGE:.message',
+        '--no-headers',
+      ],
+      { context }
+    );
+
     if (eventsResult.success && eventsResult.data && eventsResult.data.trim()) {
       logSamples.push('```');
       logSamples.push(eventsResult.data);
@@ -157,7 +175,7 @@ export async function samplePodLogs(request: PodLogsSamplingRequest): Promise<st
     } else {
       logSamples.push('*No recent events found for this pod*');
     }
-    
+
     logSamples.push('');
 
     // Add analysis hints based on common patterns
@@ -187,7 +205,6 @@ export async function samplePodLogs(request: PodLogsSamplingRequest): Promise<st
     logSamples.push('- Service unavailable messages');
 
     return logSamples.join('\n');
-    
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     return `# Pod Logs Sampling Error

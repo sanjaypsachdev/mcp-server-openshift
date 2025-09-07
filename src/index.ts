@@ -32,8 +32,14 @@ import { projectListResource, getProjectList } from './resources/project-list.js
 import { appTemplatesResource, getAppTemplates } from './resources/app-templates.js';
 
 // Import prompts
-import { troubleshootPodPrompt, generateTroubleshootPodPrompt } from './prompts/troubleshoot-pod.js';
-import { monitoringPromptsPrompt, generateMonitoringPrompts } from './prompts/monitoring-prompts.js';
+import {
+  troubleshootPodPrompt,
+  generateTroubleshootPodPrompt,
+} from './prompts/troubleshoot-pod.js';
+import {
+  monitoringPromptsPrompt,
+  generateMonitoringPrompts,
+} from './prompts/monitoring-prompts.js';
 
 // Import sampling
 import { samplePodLogs, type PodLogsSamplingRequest } from './sampling/pod-logs.js';
@@ -87,7 +93,7 @@ class OpenShiftMCPServer {
     });
 
     // Handle tool calls
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    this.server.setRequestHandler(CallToolRequestSchema, async request => {
       const { name, arguments: args } = request.params;
 
       try {
@@ -154,7 +160,7 @@ class OpenShiftMCPServer {
     });
 
     // Handle resource reads
-    this.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+    this.server.setRequestHandler(ReadResourceRequestSchema, async request => {
       const { uri } = request.params;
 
       try {
@@ -226,7 +232,7 @@ class OpenShiftMCPServer {
     });
 
     // Handle prompt requests
-    this.server.setRequestHandler(GetPromptRequestSchema, async (request) => {
+    this.server.setRequestHandler(GetPromptRequestSchema, async request => {
       const { name, arguments: args } = request.params;
 
       try {
@@ -236,7 +242,7 @@ class OpenShiftMCPServer {
               podName: args?.podName || 'UNKNOWN_POD',
               namespace: args?.namespace || 'UNKNOWN_NAMESPACE',
               symptoms: args?.symptoms,
-              containerName: args?.containerName
+              containerName: args?.containerName,
             });
             return {
               description: `Pod troubleshooting guide for ${args?.podName || 'pod'} in ${args?.namespace || 'namespace'}`,
@@ -256,7 +262,7 @@ class OpenShiftMCPServer {
               scenario: args?.scenario || 'cluster',
               target: args?.target,
               namespace: args?.namespace,
-              timeRange: args?.timeRange
+              timeRange: args?.timeRange,
             });
             return {
               description: `Monitoring guidance for ${args?.scenario || 'cluster'} scenario`,
@@ -294,32 +300,34 @@ class OpenShiftMCPServer {
 
   private setupSamplingHandlers() {
     // Handle sampling requests
-    this.server.setRequestHandler(CreateMessageRequestSchema, async (request) => {
+    this.server.setRequestHandler(CreateMessageRequestSchema, async request => {
       const { messages } = request.params;
-      
+
       try {
         // Look for sampling requests in the messages
         for (const message of messages) {
           if (message.content.type === 'text') {
             const text = message.content.text;
-            
+
             // Check if this is a pod logs sampling request
-            const podLogsMatch = text.match(/sample pod logs for (\S+) in namespace (\S+)(?:\s+container (\S+))?(?:\s+since (\S+))?(?:\s+lines (\d+))?/i);
-            
+            const podLogsMatch = text.match(
+              /sample pod logs for (\S+) in namespace (\S+)(?:\s+container (\S+))?(?:\s+since (\S+))?(?:\s+lines (\d+))?/i
+            );
+
             if (podLogsMatch) {
               const [, podName, namespace, containerName, since, maxLines] = podLogsMatch;
-              
+
               const samplingRequest: PodLogsSamplingRequest = {
                 podName,
                 namespace,
                 containerName,
                 maxLines: maxLines ? parseInt(maxLines) : 100,
                 since: since || '1h',
-                includePrevious: true
+                includePrevious: true,
               };
-              
+
               const logSample = await samplePodLogs(samplingRequest);
-              
+
               return {
                 model: 'openshift-pod-logs-sampler',
                 role: 'assistant' as const,
@@ -329,9 +337,12 @@ class OpenShiftMCPServer {
                 },
               };
             }
-            
+
             // Generic pod logs sampling (fallback)
-            if (text.toLowerCase().includes('sample pod logs') || text.toLowerCase().includes('analyze pod logs')) {
+            if (
+              text.toLowerCase().includes('sample pod logs') ||
+              text.toLowerCase().includes('analyze pod logs')
+            ) {
               return {
                 model: 'openshift-pod-logs-sampler',
                 role: 'assistant' as const,
@@ -358,7 +369,7 @@ To sample pod logs, please specify:
             }
           }
         }
-        
+
         // If no sampling pattern matches, return default response
         return {
           model: 'openshift-sampler',
@@ -368,7 +379,6 @@ To sample pod logs, please specify:
             text: 'I can help sample OpenShift resources for analysis. Try asking me to "sample pod logs" with specific pod details.',
           },
         };
-        
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         return {
@@ -384,7 +394,7 @@ To sample pod logs, please specify:
   }
 
   private setupErrorHandling() {
-    this.server.onerror = (error) => {
+    this.server.onerror = error => {
       console.error('[MCP Error]', error);
     };
 
@@ -403,12 +413,14 @@ To sample pod logs, please specify:
     // Check if OpenShift CLI is available
     const cliAvailable = await this.openShiftManager.checkCLI();
     if (!cliAvailable) {
-      console.error('Warning: OpenShift CLI (oc) not found in PATH. Some functionality may not work.');
+      console.error(
+        'Warning: OpenShift CLI (oc) not found in PATH. Some functionality may not work.'
+      );
     }
 
     // Determine transport type based on environment variables or command line arguments
     const transportType = this.getTransportType();
-    
+
     if (transportType === 'sse') {
       await this.startHttpServer();
     } else {
@@ -426,12 +438,14 @@ To sample pod logs, please specify:
     // Parse port from command line arguments or use default
     const args = process.argv.slice(2);
     const portArg = args.find(arg => arg.startsWith('--port='));
-    const port = portArg ? parseInt(portArg.split('=')[1]) : parseInt(process.env.MCP_PORT || '3000');
+    const port = portArg
+      ? parseInt(portArg.split('=')[1])
+      : parseInt(process.env.MCP_PORT || '3000');
     const host = process.env.MCP_HOST || 'localhost';
-    
+
     console.error(`Starting HTTP server on ${host}:${port}`);
     console.error(`Connect using: http://${host}:${port}/sse`);
-    
+
     // Create HTTP server
     const http = await import('http');
     const httpServer = http.createServer((req, res) => {
@@ -439,13 +453,13 @@ To sample pod logs, please specify:
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
       res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-      
+
       if (req.method === 'OPTIONS') {
         res.writeHead(200);
         res.end();
         return;
       }
-      
+
       // Handle SSE endpoint
       if (req.url === '/sse') {
         // Create SSE transport for this request
@@ -455,28 +469,30 @@ To sample pod logs, please specify:
         });
         return;
       }
-      
+
       // Handle other requests
       if (req.url === '/' || req.url === '/health') {
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({
-          name: 'MCP OpenShift Server',
-          version: '1.0.0',
-          transport: 'HTTP/SSE',
-          endpoints: {
-            sse: '/sse',
-            health: '/health'
-          },
-          status: 'running'
-        }));
+        res.end(
+          JSON.stringify({
+            name: 'MCP OpenShift Server',
+            version: '1.0.0',
+            transport: 'HTTP/SSE',
+            endpoints: {
+              sse: '/sse',
+              health: '/health',
+            },
+            status: 'running',
+          })
+        );
         return;
       }
-      
+
       // 404 for other paths
       res.writeHead(404, { 'Content-Type': 'text/plain' });
       res.end('MCP OpenShift Server - Use /sse endpoint for MCP communication');
     });
-    
+
     // Start the HTTP server
     await new Promise<void>((resolve, reject) => {
       httpServer.listen(port, host, (err?: Error) => {
@@ -496,7 +512,7 @@ To sample pod logs, please specify:
     if (process.env.MCP_TRANSPORT === 'sse' || process.env.MCP_TRANSPORT === 'http') {
       return 'sse';
     }
-    
+
     // Check command line arguments
     const args = process.argv.slice(2);
     if (args.includes('--transport=sse') || args.includes('--transport=http')) {
@@ -505,23 +521,22 @@ To sample pod logs, please specify:
     if (args.includes('--http') || args.includes('--sse')) {
       return 'sse';
     }
-    
+
     // Check for port argument (indicates HTTP mode)
     const portArg = args.find(arg => arg.startsWith('--port='));
     if (portArg) {
       return 'sse';
     }
-    
+
     // Default to stdio for backward compatibility
     return 'stdio';
   }
-
 }
 
 // Command line argument parsing
 function parseArgs() {
   const args = process.argv.slice(2);
-  
+
   if (args.includes('--help') || args.includes('-h')) {
     console.log(`
 MCP OpenShift Server
@@ -601,7 +616,7 @@ parseArgs();
 
 // Start the server
 const server = new OpenShiftMCPServer();
-server.start().catch((error) => {
+server.start().catch(error => {
   console.error('Failed to start server:', error);
   process.exit(1);
 });

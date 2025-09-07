@@ -4,33 +4,46 @@ import { OpenShiftManager } from '../utils/openshift-manager.js';
 export const appTemplatesResource: Resource = {
   uri: 'openshift://app-templates',
   name: 'OpenShift Application Templates',
-  description: 'Comprehensive collection of application deployment templates for common OpenShift scenarios and frameworks',
-  mimeType: 'application/json'
+  description:
+    'Comprehensive collection of application deployment templates for common OpenShift scenarios and frameworks',
+  mimeType: 'application/json',
 };
 
 export async function getAppTemplates(context?: string): Promise<string> {
   const manager = OpenShiftManager.getInstance();
   const templatesInfo: any = {};
-  
+
   try {
     // Get available OpenShift templates
-    const templatesResult = await manager.executeCommand(['get', 'templates', '-n', 'openshift', '-o', 'json'], { context });
+    const templatesResult = await manager.executeCommand(
+      ['get', 'templates', '-n', 'openshift', '-o', 'json'],
+      { context }
+    );
     let openshiftTemplates: any[] = [];
-    
+
     if (templatesResult.success) {
-      const templatesData = typeof templatesResult.data === 'string' ? JSON.parse(templatesResult.data) : templatesResult.data;
+      const templatesData =
+        typeof templatesResult.data === 'string'
+          ? JSON.parse(templatesResult.data)
+          : templatesResult.data;
       openshiftTemplates = templatesData.items || [];
     }
-    
+
     // Get image streams for builder images
-    const imageStreamsResult = await manager.executeCommand(['get', 'imagestreams', '-n', 'openshift', '-o', 'json'], { context });
+    const imageStreamsResult = await manager.executeCommand(
+      ['get', 'imagestreams', '-n', 'openshift', '-o', 'json'],
+      { context }
+    );
     let builderImages: any[] = [];
-    
+
     if (imageStreamsResult.success) {
-      const imageStreamsData = typeof imageStreamsResult.data === 'string' ? JSON.parse(imageStreamsResult.data) : imageStreamsResult.data;
+      const imageStreamsData =
+        typeof imageStreamsResult.data === 'string'
+          ? JSON.parse(imageStreamsResult.data)
+          : imageStreamsResult.data;
       builderImages = imageStreamsData.items || [];
     }
-    
+
     templatesInfo.categories = {
       webApplications: getWebApplicationTemplates(),
       databases: getDatabaseTemplates(),
@@ -39,55 +52,59 @@ export async function getAppTemplates(context?: string): Promise<string> {
       cicd: getCICDTemplates(),
       microservices: getMicroservicesTemplates(),
       bigData: getBigDataTemplates(),
-      security: getSecurityTemplates()
+      security: getSecurityTemplates(),
     };
-    
+
     templatesInfo.builderImages = builderImages
-      .filter((img: any) => img.metadata?.labels?.['samples.operator.openshift.io/managed'] !== 'false')
+      .filter(
+        (img: any) => img.metadata?.labels?.['samples.operator.openshift.io/managed'] !== 'false'
+      )
       .map((img: any) => ({
         name: img.metadata?.name,
-        displayName: img.spec?.tags?.[0]?.annotations?.['openshift.io/display-name'] || img.metadata?.name,
+        displayName:
+          img.spec?.tags?.[0]?.annotations?.['openshift.io/display-name'] || img.metadata?.name,
         description: img.spec?.tags?.[0]?.annotations?.description || 'No description available',
         tags: img.spec?.tags?.map((tag: any) => tag.name) || [],
         language: detectLanguage(img.metadata?.name || ''),
         category: categorizeBuilderImage(img.metadata?.name || ''),
         sampleRepo: img.spec?.tags?.[0]?.annotations?.['sampleRepo'] || null,
-        supports: img.spec?.tags?.[0]?.annotations?.['supports'] || null
+        supports: img.spec?.tags?.[0]?.annotations?.['supports'] || null,
       }));
-    
+
     templatesInfo.openshiftTemplates = openshiftTemplates.map((template: any) => ({
       name: template.metadata?.name,
-      displayName: template.metadata?.annotations?.['openshift.io/display-name'] || template.metadata?.name,
+      displayName:
+        template.metadata?.annotations?.['openshift.io/display-name'] || template.metadata?.name,
       description: template.metadata?.annotations?.description || 'No description available',
       iconClass: template.metadata?.annotations?.['iconClass'] || 'fa fa-cube',
       tags: template.metadata?.annotations?.tags?.split(',') || [],
-      parameters: template.parameters?.map((param: any) => ({
-        name: param.name,
-        description: param.description || '',
-        required: param.required || false,
-        value: param.value || null
-      })) || []
+      parameters:
+        template.parameters?.map((param: any) => ({
+          name: param.name,
+          description: param.description || '',
+          required: param.required || false,
+          value: param.value || null,
+        })) || [],
     }));
-    
+
     templatesInfo.deploymentPatterns = getDeploymentPatterns();
     templatesInfo.routeTemplates = getRouteTemplates();
     templatesInfo.storageTemplates = getStorageTemplates();
     templatesInfo.networkingTemplates = getNetworkingTemplates();
-    
+
     templatesInfo.metadata = {
       retrievedAt: new Date().toISOString(),
       context: context || 'current',
       totalBuilderImages: builderImages.length,
-      totalOpenshiftTemplates: openshiftTemplates.length
+      totalOpenshiftTemplates: openshiftTemplates.length,
     };
-    
+
     return JSON.stringify(templatesInfo, null, 2);
-    
   } catch (error) {
     const errorInfo = {
       error: 'Failed to retrieve application templates',
       message: error instanceof Error ? error.message : String(error),
-      retrievedAt: new Date().toISOString()
+      retrievedAt: new Date().toISOString(),
     };
     return JSON.stringify(errorInfo, null, 2);
   }
@@ -104,15 +121,15 @@ function getWebApplicationTemplates() {
           name: 'Express API Server',
           gitRepo: 'https://github.com/sclorg/nodejs-ex.git',
           ports: [8080],
-          env: ['NODE_ENV=production']
+          env: ['NODE_ENV=production'],
         },
         {
           name: 'React Frontend',
           gitRepo: 'https://github.com/sclorg/react-web-app.git',
           ports: [8080],
-          buildScript: 'npm run build'
-        }
-      ]
+          buildScript: 'npm run build',
+        },
+      ],
     },
     python: {
       name: 'Python Application',
@@ -123,15 +140,15 @@ function getWebApplicationTemplates() {
           name: 'Django Web App',
           gitRepo: 'https://github.com/sclorg/django-ex.git',
           ports: [8080],
-          env: ['DJANGO_SETTINGS_MODULE=myproject.settings']
+          env: ['DJANGO_SETTINGS_MODULE=myproject.settings'],
         },
         {
           name: 'Flask API',
           gitRepo: 'https://github.com/sclorg/flask-ex.git',
           ports: [8080],
-          env: ['FLASK_ENV=production']
-        }
-      ]
+          env: ['FLASK_ENV=production'],
+        },
+      ],
     },
     java: {
       name: 'Java Application',
@@ -142,15 +159,15 @@ function getWebApplicationTemplates() {
           name: 'Spring Boot App',
           gitRepo: 'https://github.com/spring-guides/gs-spring-boot.git',
           ports: [8080],
-          env: ['SPRING_PROFILES_ACTIVE=production']
+          env: ['SPRING_PROFILES_ACTIVE=production'],
         },
         {
           name: 'Quarkus Native',
           gitRepo: 'https://github.com/quarkusio/quarkus-quickstarts.git',
           ports: [8080],
-          buildType: 'native'
-        }
-      ]
+          buildType: 'native',
+        },
+      ],
     },
     dotnet: {
       name: '.NET Application',
@@ -161,9 +178,9 @@ function getWebApplicationTemplates() {
           name: 'ASP.NET Core Web API',
           gitRepo: 'https://github.com/redhat-developer/s2i-dotnetcore-ex.git',
           ports: [8080],
-          env: ['ASPNETCORE_ENVIRONMENT=Production']
-        }
-      ]
+          env: ['ASPNETCORE_ENVIRONMENT=Production'],
+        },
+      ],
     },
     php: {
       name: 'PHP Application',
@@ -173,9 +190,9 @@ function getWebApplicationTemplates() {
         {
           name: 'PHP Web Application',
           gitRepo: 'https://github.com/sclorg/cakephp-ex.git',
-          ports: [8080]
-        }
-      ]
+          ports: [8080],
+        },
+      ],
     },
     ruby: {
       name: 'Ruby Application',
@@ -186,10 +203,10 @@ function getWebApplicationTemplates() {
           name: 'Ruby on Rails App',
           gitRepo: 'https://github.com/sclorg/ruby-ex.git',
           ports: [8080],
-          env: ['RAILS_ENV=production']
-        }
-      ]
-    }
+          env: ['RAILS_ENV=production'],
+        },
+      ],
+    },
   };
 }
 
@@ -238,8 +255,8 @@ spec:
       - name: postgresql-data
         persistentVolumeClaim:
           claimName: postgresql-pvc
-`
-      }
+`,
+      },
     },
     mysql: {
       name: 'MySQL Database',
@@ -247,7 +264,7 @@ spec:
       image: 'mysql:8.0-el8',
       ports: [3306],
       env: ['MYSQL_USER', 'MYSQL_PASSWORD', 'MYSQL_DATABASE', 'MYSQL_ROOT_PASSWORD'],
-      storage: '1Gi'
+      storage: '1Gi',
     },
     mongodb: {
       name: 'MongoDB Database',
@@ -255,15 +272,15 @@ spec:
       image: 'mongodb:4.4-el8',
       ports: [27017],
       env: ['MONGODB_USER', 'MONGODB_PASSWORD', 'MONGODB_DATABASE'],
-      storage: '1Gi'
+      storage: '1Gi',
     },
     redis: {
       name: 'Redis Cache',
       description: 'Deploy Redis in-memory cache and message broker',
       image: 'redis:6-el8',
       ports: [6379],
-      env: ['REDIS_PASSWORD']
-    }
+      env: ['REDIS_PASSWORD'],
+    },
   };
 }
 
@@ -295,17 +312,17 @@ spec:
     replicas: 3
     storage:
       type: ephemeral
-`
-        }
-      ]
+`,
+        },
+      ],
     },
     rabbitmq: {
       name: 'RabbitMQ',
       description: 'Deploy RabbitMQ message broker',
       image: 'rabbitmq:3.8-management',
       ports: [5672, 15672],
-      env: ['RABBITMQ_DEFAULT_USER', 'RABBITMQ_DEFAULT_PASS']
-    }
+      env: ['RABBITMQ_DEFAULT_USER', 'RABBITMQ_DEFAULT_PASS'],
+    },
   };
 }
 
@@ -315,15 +332,15 @@ function getMonitoringTemplates() {
       name: 'Prometheus Monitoring',
       description: 'Deploy Prometheus monitoring stack',
       operator: 'prometheus-operator',
-      components: ['prometheus', 'grafana', 'alertmanager']
+      components: ['prometheus', 'grafana', 'alertmanager'],
     },
     grafana: {
       name: 'Grafana Dashboard',
       description: 'Deploy Grafana for metrics visualization',
       image: 'grafana/grafana:latest',
       ports: [3000],
-      storage: '1Gi'
-    }
+      storage: '1Gi',
+    },
   };
 }
 
@@ -334,13 +351,13 @@ function getCICDTemplates() {
       description: 'Deploy Jenkins for continuous integration and deployment',
       template: 'jenkins-persistent',
       storage: '1Gi',
-      plugins: ['git', 'workflow-aggregator', 'kubernetes']
+      plugins: ['git', 'workflow-aggregator', 'kubernetes'],
     },
     tekton: {
       name: 'Tekton Pipelines',
       description: 'Cloud-native CI/CD with Tekton',
-      operator: 'openshift-pipelines-operator'
-    }
+      operator: 'openshift-pipelines-operator',
+    },
   };
 }
 
@@ -349,13 +366,13 @@ function getMicroservicesTemplates() {
     serviceMesh: {
       name: 'Service Mesh (Istio)',
       description: 'Deploy service mesh for microservices communication',
-      operator: 'servicemeshoperator'
+      operator: 'servicemeshoperator',
     },
     apiGateway: {
       name: 'API Gateway',
       description: 'Deploy API gateway for microservices routing',
-      examples: ['Kong', '3scale', 'Ambassador']
-    }
+      examples: ['Kong', '3scale', 'Ambassador'],
+    },
   };
 }
 
@@ -364,13 +381,13 @@ function getBigDataTemplates() {
     spark: {
       name: 'Apache Spark',
       description: 'Deploy Spark cluster for big data processing',
-      operator: 'spark-operator'
+      operator: 'spark-operator',
     },
     elasticsearch: {
       name: 'Elasticsearch',
       description: 'Deploy Elasticsearch cluster for search and analytics',
-      operator: 'elastic-cloud-eck'
-    }
+      operator: 'elastic-cloud-eck',
+    },
   };
 }
 
@@ -379,13 +396,13 @@ function getSecurityTemplates() {
     vault: {
       name: 'HashiCorp Vault',
       description: 'Deploy Vault for secrets management',
-      operator: 'vault-operator'
+      operator: 'vault-operator',
     },
     certManager: {
       name: 'Cert Manager',
       description: 'Automated certificate management',
-      operator: 'cert-manager'
-    }
+      operator: 'cert-manager',
+    },
   };
 }
 
@@ -451,7 +468,7 @@ spec:
         image: myapp:v2
         ports:
         - containerPort: 8080
-`
+`,
     },
     canary: {
       name: 'Canary Deployment',
@@ -512,15 +529,15 @@ spec:
         image: myapp:v2
         ports:
         - containerPort: 8080
-`
+`,
     },
     rollingUpdate: {
       name: 'Rolling Update',
       description: 'Standard rolling update deployment pattern',
       strategy: 'RollingUpdate',
       maxUnavailable: '25%',
-      maxSurge: '25%'
-    }
+      maxSurge: '25%',
+    },
   };
 }
 
@@ -544,7 +561,7 @@ spec:
   tls:
     termination: edge
     insecureEdgeTerminationPolicy: Redirect
-`
+`,
     },
     passthrough: {
       name: 'Passthrough Route',
@@ -563,7 +580,7 @@ spec:
     targetPort: 8443
   tls:
     termination: passthrough
-`
+`,
     },
     reencrypt: {
       name: 'Re-encrypt Route',
@@ -586,8 +603,8 @@ spec:
       -----BEGIN CERTIFICATE-----
       ...backend certificate...
       -----END CERTIFICATE-----
-`
-    }
+`,
+    },
   };
 }
 
@@ -608,7 +625,7 @@ spec:
     requests:
       storage: 1Gi
   storageClassName: gp3-csi
-`
+`,
     },
     sharedStorage: {
       name: 'Shared Storage (ReadWriteMany)',
@@ -625,8 +642,8 @@ spec:
     requests:
       storage: 5Gi
   storageClassName: efs-csi
-`
-    }
+`,
+    },
   };
 }
 
@@ -658,7 +675,7 @@ spec:
     - namespaceSelector:
         matchLabels:
           name: current-namespace
-`
+`,
     },
     serviceMonitor: {
       name: 'Service Monitor',
@@ -676,30 +693,30 @@ spec:
   - port: metrics
     interval: 30s
     path: /metrics
-`
-    }
+`,
+    },
   };
 }
 
 function detectLanguage(imageName: string): string {
   const languageMap: { [key: string]: string } = {
-    'nodejs': 'JavaScript/TypeScript',
-    'python': 'Python',
-    'openjdk': 'Java',
-    'dotnet': '.NET/C#',
-    'php': 'PHP',
-    'ruby': 'Ruby',
-    'golang': 'Go',
-    'nginx': 'Static/HTML',
-    'httpd': 'Static/HTML'
+    nodejs: 'JavaScript/TypeScript',
+    python: 'Python',
+    openjdk: 'Java',
+    dotnet: '.NET/C#',
+    php: 'PHP',
+    ruby: 'Ruby',
+    golang: 'Go',
+    nginx: 'Static/HTML',
+    httpd: 'Static/HTML',
   };
-  
+
   for (const [key, language] of Object.entries(languageMap)) {
     if (imageName.toLowerCase().includes(key)) {
       return language;
     }
   }
-  
+
   return 'Unknown';
 }
 
@@ -712,6 +729,6 @@ function categorizeBuilderImage(imageName: string): string {
   if (imageName.includes('ruby')) return 'Web/API';
   if (imageName.includes('golang')) return 'Microservices/API';
   if (imageName.includes('nginx') || imageName.includes('httpd')) return 'Static/Proxy';
-  
+
   return 'General';
 }

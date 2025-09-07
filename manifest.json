@@ -12,20 +12,8 @@
   "bugs": {
     "url": "https://github.com/your-org/mcp-server-openshift/issues"
   },
-  "keywords": [
-    "mcp",
-    "openshift",
-    "kubernetes",
-    "container",
-    "orchestration",
-    "devops",
-    "red-hat"
-  ],
-  "categories": [
-    "development",
-    "infrastructure",
-    "containers"
-  ],
+  "keywords": ["mcp", "openshift", "kubernetes", "container", "orchestration", "devops", "red-hat"],
+  "categories": ["development", "infrastructure", "containers"],
   "capabilities": {
     "tools": [
       {
@@ -33,7 +21,7 @@
         "description": "Get OpenShift resources like pods, deploymentconfigs, routes, projects"
       },
       {
-        "name": "oc_create", 
+        "name": "oc_create",
         "description": "Create OpenShift resources like projects, deploymentconfigs, routes"
       },
       {
@@ -86,13 +74,13 @@
         "description": "Comprehensive information about the OpenShift cluster including version, nodes, and status"
       },
       {
-        "uri": "openshift://project-list", 
+        "uri": "openshift://project-list",
         "name": "OpenShift Project List",
         "description": "Comprehensive list of all projects/namespaces with detailed information, quotas, and usage statistics"
       },
       {
         "uri": "openshift://app-templates",
-        "name": "OpenShift Application Templates", 
+        "name": "OpenShift Application Templates",
         "description": "Comprehensive collection of application deployment templates for common OpenShift scenarios and frameworks"
       }
     ]
@@ -112,7 +100,7 @@
         "default": ""
       },
       "namespace": {
-        "type": "string", 
+        "type": "string",
         "description": "Default namespace/project to use",
         "default": "default"
       },
@@ -127,10 +115,5 @@
   "bin": {
     "mcp-server-openshift": "dist/index.js"
   },
-  "files": [
-    "dist/**/*",
-    "manifest.json",
-    "README.md",
-    "LICENSE"
-  ]
+  "files": ["dist/**/*", "manifest.json", "README.md", "LICENSE"]
 }

@@ -2,29 +2,30 @@ import { Prompt } from '@modelcontextprotocol/sdk/types.js';
 
 export const troubleshootPodPrompt: Prompt = {
   name: 'troubleshoot-pod-prompt',
-  description: 'Comprehensive pod troubleshooting guide for OpenShift clusters covering all possible scenarios',
+  description:
+    'Comprehensive pod troubleshooting guide for OpenShift clusters covering all possible scenarios',
   arguments: [
     {
       name: 'podName',
       description: 'Name of the pod to troubleshoot',
-      required: true
+      required: true,
     },
     {
       name: 'namespace',
       description: 'Namespace/project where the pod is located',
-      required: true
+      required: true,
     },
     {
       name: 'symptoms',
       description: 'Observed symptoms (e.g., CrashLoopBackOff, Pending, ImagePullBackOff)',
-      required: false
+      required: false,
     },
     {
       name: 'containerName',
       description: 'Specific container name if multi-container pod',
-      required: false
-    }
-  ]
+      required: false,
+    },
+  ],
 };
 
 export function generateTroubleshootPodPrompt(args: {
@@ -34,7 +35,7 @@ export function generateTroubleshootPodPrompt(args: {
   containerName?: string;
 }): string {
   const { podName, namespace, symptoms, containerName } = args;
-  
+
   return `# OpenShift Pod Troubleshooting Guide
 
 You are troubleshooting a pod in an OpenShift cluster. Follow this comprehensive troubleshooting methodology:

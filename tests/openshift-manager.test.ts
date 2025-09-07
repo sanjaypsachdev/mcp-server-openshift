@@ -25,10 +25,10 @@ describe('OpenShiftManager', () => {
 
   it('should handle command timeout', async () => {
     // Test timeout functionality
-    const result = await manager.executeCommand(['version', '--client'], { 
-      timeout: 1 // Very short timeout
+    const result = await manager.executeCommand(['version', '--client'], {
+      timeout: 1, // Very short timeout
     });
-    
+
     // Should either succeed quickly or timeout
     expect(result).toBeDefined();
     expect(typeof result.success).toBe('boolean');
