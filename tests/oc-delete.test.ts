@@ -7,17 +7,17 @@ import type { OcDeleteParams } from '../src/models/tool-models.js';
 vi.mock('../src/utils/openshift-manager.js', () => ({
   OpenShiftManager: {
     getInstance: vi.fn(() => ({
-      executeCommand: vi.fn()
-    }))
-  }
+      executeCommand: vi.fn(),
+    })),
+  },
 }));
 
 describe('oc-delete tool', () => {
   let mockManager: any;
-  
+
   beforeEach(() => {
     mockManager = {
-      executeCommand: vi.fn()
+      executeCommand: vi.fn(),
     };
     vi.mocked(OpenShiftManager.getInstance).mockReturnValue(mockManager);
   });
@@ -25,9 +25,9 @@ describe('oc-delete tool', () => {
   describe('validateDeleteParameters', () => {
     it('should require at least one resource identifier', () => {
       const params: OcDeleteParams = {
-        namespace: 'test'
+        namespace: 'test',
       };
-      
+
       const result = validateDeleteParameters(params);
       expect(result.valid).toBe(false);
       expect(result.error).toContain('Must specify resourceType, manifest, filename, or url');
@@ -36,21 +36,23 @@ describe('oc-delete tool', () => {
     it('should require resource selection when using resourceType', () => {
       const params: OcDeleteParams = {
         resourceType: 'pod',
-        namespace: 'test'
+        namespace: 'test',
       };
-      
+
       const result = validateDeleteParameters(params);
       expect(result.valid).toBe(false);
-      expect(result.error).toContain('must specify name, labelSelector, fieldSelector, or all=true');
+      expect(result.error).toContain(
+        'must specify name, labelSelector, fieldSelector, or all=true'
+      );
     });
 
     it('should validate with resourceType and name', () => {
       const params: OcDeleteParams = {
         resourceType: 'pod',
         name: 'test-pod',
-        namespace: 'test'
+        namespace: 'test',
       };
-      
+
       const result = validateDeleteParameters(params);
       expect(result.valid).toBe(true);
     });
@@ -59,9 +61,9 @@ describe('oc-delete tool', () => {
       const params: OcDeleteParams = {
         resourceType: 'pod',
         labelSelector: 'app=test',
-        namespace: 'test'
+        namespace: 'test',
       };
-      
+
       const result = validateDeleteParameters(params);
       expect(result.valid).toBe(true);
     });
@@ -69,9 +71,9 @@ describe('oc-delete tool', () => {
     it('should validate with manifest', () => {
       const params: OcDeleteParams = {
         manifest: 'apiVersion: v1\nkind: Pod\nmetadata:\n  name: test-pod',
-        namespace: 'test'
+        namespace: 'test',
       };
-      
+
       const result = validateDeleteParameters(params);
       expect(result.valid).toBe(true);
     });
@@ -80,9 +82,9 @@ describe('oc-delete tool', () => {
       const params: OcDeleteParams = {
         manifest: 'apiVersion: v1\nkind: Pod',
         filename: '/path/to/file.yaml',
-        namespace: 'test'
+        namespace: 'test',
       };
-      
+
       const result = validateDeleteParameters(params);
       expect(result.valid).toBe(false);
       expect(result.error).toContain('Cannot specify multiple sources');
@@ -93,9 +95,9 @@ describe('oc-delete tool', () => {
         resourceType: 'pod',
         name: 'test-pod',
         namespace: 'test',
-        timeout: 'invalid-format'
+        timeout: 'invalid-format',
       };
-      
+
       const result = validateDeleteParameters(params);
       expect(result.valid).toBe(false);
       expect(result.error).toContain('Timeout must be in format');
@@ -103,15 +105,15 @@ describe('oc-delete tool', () => {
 
     it('should accept valid timeout formats', () => {
       const validTimeouts = ['60s', '5m', '1h'];
-      
+
       validTimeouts.forEach(timeout => {
         const params: OcDeleteParams = {
           resourceType: 'pod',
           name: 'test-pod',
           namespace: 'test',
-          timeout
+          timeout,
         };
-        
+
         const result = validateDeleteParameters(params);
         expect(result.valid).toBe(true);
       });
@@ -122,9 +124,9 @@ describe('oc-delete tool', () => {
         resourceType: 'pod',
         name: 'test-pod',
         namespace: 'test',
-        gracePeriodSeconds: -1
+        gracePeriodSeconds: -1,
       };
-      
+
       const result = validateDeleteParameters(params);
       expect(result.valid).toBe(false);
       expect(result.error).toContain('Grace period must be >= 0');
@@ -136,7 +138,7 @@ describe('oc-delete tool', () => {
       const params: OcDeleteParams = {
         resourceType: 'pod',
         name: 'test-pod',
-        namespace: 'test'
+        namespace: 'test',
       };
 
       // Mock successful resource discovery
@@ -145,17 +147,17 @@ describe('oc-delete tool', () => {
           success: true,
           data: JSON.stringify({
             kind: 'Pod',
-            metadata: { name: 'test-pod', namespace: 'test' }
-          })
+            metadata: { name: 'test-pod', namespace: 'test' },
+          }),
         })
         // Mock successful deletion
         .mockResolvedValueOnce({
           success: true,
-          data: 'pod/test-pod deleted'
+          data: 'pod/test-pod deleted',
         });
 
       const result = await handleOcDelete(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Delete Operation Successful');
       expect(result.content[0].text).toContain('test-pod');
@@ -165,23 +167,23 @@ describe('oc-delete tool', () => {
       const params: OcDeleteParams = {
         resourceType: 'pod',
         name: 'nonexistent-pod',
-        namespace: 'test'
+        namespace: 'test',
       };
 
       // Mock resource not found during discovery
       mockManager.executeCommand
         .mockResolvedValueOnce({
           success: false,
-          error: 'pods "nonexistent-pod" not found'
+          error: 'pods "nonexistent-pod" not found',
         })
         // Mock delete command with not found
         .mockResolvedValueOnce({
           success: false,
-          error: 'Error from server (NotFound): pods "nonexistent-pod" not found'
+          error: 'Error from server (NotFound): pods "nonexistent-pod" not found',
         });
 
       const result = await handleOcDelete(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('No Resources Found for Deletion');
       expect(result.content[0].text).toContain('nonexistent-pod');
@@ -191,7 +193,7 @@ describe('oc-delete tool', () => {
       const params: OcDeleteParams = {
         resourceType: 'pod',
         name: 'test-pod',
-        namespace: 'test'
+        namespace: 'test',
       };
 
       mockManager.executeCommand
@@ -199,16 +201,16 @@ describe('oc-delete tool', () => {
           success: true,
           data: JSON.stringify({
             kind: 'Pod',
-            metadata: { name: 'test-pod', namespace: 'test' }
-          })
+            metadata: { name: 'test-pod', namespace: 'test' },
+          }),
         })
         .mockResolvedValueOnce({
           success: false,
-          error: 'Error from server (Forbidden): pods "test-pod" is forbidden'
+          error: 'Error from server (Forbidden): pods "test-pod" is forbidden',
         });
 
       const result = await handleOcDelete(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Permission Error');
       expect(result.content[0].text).toContain('RBAC permissions');
@@ -219,7 +221,7 @@ describe('oc-delete tool', () => {
         resourceType: 'namespace',
         name: 'test-namespace',
         namespace: 'default',
-        confirm: true // Add confirm to bypass safety check
+        confirm: true, // Add confirm to bypass safety check
       };
 
       mockManager.executeCommand
@@ -227,16 +229,16 @@ describe('oc-delete tool', () => {
           success: true,
           data: JSON.stringify({
             kind: 'Namespace',
-            metadata: { name: 'test-namespace' }
-          })
+            metadata: { name: 'test-namespace' },
+          }),
         })
         .mockResolvedValueOnce({
           success: false,
-          error: 'namespace "test-namespace" has finalizers preventing deletion'
+          error: 'namespace "test-namespace" has finalizers preventing deletion',
         });
 
       const result = await handleOcDelete(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Delete Operation Failed');
       expect(result.content[0].text).toContain('Finalizer Blocking Deletion');
@@ -246,22 +248,21 @@ describe('oc-delete tool', () => {
       const params: OcDeleteParams = {
         resourceType: 'pod',
         all: true,
-        namespace: 'test'
+        namespace: 'test',
       };
 
-      mockManager.executeCommand
-        .mockResolvedValueOnce({
-          success: true,
-          data: JSON.stringify({
-            items: Array.from({ length: 5 }, (_, i) => ({
-              kind: 'Pod',
-              metadata: { name: `pod-${i}`, namespace: 'test' }
-            }))
-          })
-        });
+      mockManager.executeCommand.mockResolvedValueOnce({
+        success: true,
+        data: JSON.stringify({
+          items: Array.from({ length: 5 }, (_, i) => ({
+            kind: 'Pod',
+            metadata: { name: `pod-${i}`, namespace: 'test' },
+          })),
+        }),
+      });
 
       const result = await handleOcDelete(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Dangerous Delete Operation');
       expect(result.content[0].text).toContain('confirm=true');
@@ -272,20 +273,19 @@ describe('oc-delete tool', () => {
         resourceType: 'pod',
         name: 'test-pod',
         namespace: 'test',
-        dryRun: true
+        dryRun: true,
       };
 
-      mockManager.executeCommand
-        .mockResolvedValueOnce({
-          success: true,
-          data: JSON.stringify({
-            kind: 'Pod',
-            metadata: { name: 'test-pod', namespace: 'test' }
-          })
-        });
+      mockManager.executeCommand.mockResolvedValueOnce({
+        success: true,
+        data: JSON.stringify({
+          kind: 'Pod',
+          metadata: { name: 'test-pod', namespace: 'test' },
+        }),
+      });
 
       const result = await handleOcDelete(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Dry Run: Delete Operation Preview');
       expect(result.content[0].text).toContain('test-pod');
@@ -297,7 +297,7 @@ describe('oc-delete tool', () => {
         resourceType: 'pod',
         labelSelector: 'app=test',
         namespace: 'test',
-        confirm: true
+        confirm: true,
       };
 
       mockManager.executeCommand
@@ -306,17 +306,17 @@ describe('oc-delete tool', () => {
           data: JSON.stringify({
             items: [
               { kind: 'Pod', metadata: { name: 'test-pod-1', namespace: 'test' } },
-              { kind: 'Pod', metadata: { name: 'test-pod-2', namespace: 'test' } }
-            ]
-          })
+              { kind: 'Pod', metadata: { name: 'test-pod-2', namespace: 'test' } },
+            ],
+          }),
         })
         .mockResolvedValueOnce({
           success: true,
-          data: 'pod/test-pod-1 deleted\npod/test-pod-2 deleted'
+          data: 'pod/test-pod-1 deleted\npod/test-pod-2 deleted',
         });
 
       const result = await handleOcDelete(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Delete Operation Successful');
       expect(result.content[0].text).toContain('test-pod-1');
@@ -331,20 +331,19 @@ metadata:
   name: test-pod
   namespace: test
 `;
-      
+
       const params: OcDeleteParams = {
         manifest,
-        namespace: 'test'
+        namespace: 'test',
       };
 
-      mockManager.executeCommand
-        .mockResolvedValueOnce({
-          success: true,
-          data: 'pod/test-pod deleted'
-        });
+      mockManager.executeCommand.mockResolvedValueOnce({
+        success: true,
+        data: 'pod/test-pod deleted',
+      });
 
       const result = await handleOcDelete(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Delete Operation Successful');
     });
@@ -353,11 +352,11 @@ metadata:
       const params: OcDeleteParams = {
         resourceType: 'pod',
         name: 'system-pod',
-        namespace: 'kube-system'
+        namespace: 'kube-system',
       };
 
       const result = await handleOcDelete(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Dangerous Delete Operation');
       expect(result.content[0].text).toContain('system namespace');
@@ -367,11 +366,11 @@ metadata:
       const params: OcDeleteParams = {
         resourceType: 'namespace',
         name: 'test-namespace',
-        namespace: 'default'
+        namespace: 'default',
       };
 
       const result = await handleOcDelete(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Dangerous Delete Operation');
       expect(result.content[0].text).toContain('critical resource type');
@@ -383,7 +382,7 @@ metadata:
         name: 'stuck-pod',
         namespace: 'test',
         timeout: '10s',
-        wait: true
+        wait: true,
       };
 
       mockManager.executeCommand
@@ -391,16 +390,16 @@ metadata:
           success: true,
           data: JSON.stringify({
             kind: 'Pod',
-            metadata: { name: 'stuck-pod', namespace: 'test' }
-          })
+            metadata: { name: 'stuck-pod', namespace: 'test' },
+          }),
         })
         .mockResolvedValueOnce({
           success: false,
-          error: 'timeout: timed out waiting for the condition'
+          error: 'timeout: timed out waiting for the condition',
         });
 
       const result = await handleOcDelete(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Timeout Error');
       expect(result.content[0].text).toContain('Increase timeout value');
@@ -412,7 +411,7 @@ metadata:
         name: 'test-pod',
         namespace: 'test',
         force: true,
-        confirm: true
+        confirm: true,
       };
 
       mockManager.executeCommand
@@ -420,16 +419,16 @@ metadata:
           success: true,
           data: JSON.stringify({
             kind: 'Pod',
-            metadata: { name: 'test-pod', namespace: 'test' }
-          })
+            metadata: { name: 'test-pod', namespace: 'test' },
+          }),
         })
         .mockResolvedValueOnce({
           success: true,
-          data: 'pod/test-pod deleted'
+          data: 'pod/test-pod deleted',
         });
 
       const result = await handleOcDelete(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Delete Operation Successful');
       // Should have warnings about force deletion in progress log
@@ -440,17 +439,16 @@ metadata:
       const params: OcDeleteParams = {
         resourceType: 'pod',
         labelSelector: 'app=nonexistent',
-        namespace: 'test'
+        namespace: 'test',
       };
 
-      mockManager.executeCommand
-        .mockResolvedValueOnce({
-          success: true,
-          data: JSON.stringify({ items: [] })
-        });
+      mockManager.executeCommand.mockResolvedValueOnce({
+        success: true,
+        data: JSON.stringify({ items: [] }),
+      });
 
       const result = await handleOcDelete(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('No Resources Found for Deletion');
       expect(result.content[0].text).toContain('app=nonexistent');
@@ -461,7 +459,7 @@ metadata:
         resourceType: 'configmap',
         labelSelector: 'temp=true',
         allNamespaces: true,
-        confirm: true
+        confirm: true,
       };
 
       mockManager.executeCommand
@@ -470,17 +468,17 @@ metadata:
           data: JSON.stringify({
             items: [
               { kind: 'ConfigMap', metadata: { name: 'temp-config-1', namespace: 'ns1' } },
-              { kind: 'ConfigMap', metadata: { name: 'temp-config-2', namespace: 'ns2' } }
-            ]
-          })
+              { kind: 'ConfigMap', metadata: { name: 'temp-config-2', namespace: 'ns2' } },
+            ],
+          }),
         })
         .mockResolvedValueOnce({
           success: true,
-          data: 'configmap/temp-config-1 deleted\nconfigmap/temp-config-2 deleted'
+          data: 'configmap/temp-config-1 deleted\nconfigmap/temp-config-2 deleted',
         });
 
       const result = await handleOcDelete(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Delete Operation Successful');
       expect(result.content[0].text).toContain('temp-config-1');
@@ -493,7 +491,7 @@ metadata:
       const params: OcDeleteParams = {
         resourceType: 'secret',
         name: 'protected-secret',
-        namespace: 'test'
+        namespace: 'test',
       };
 
       mockManager.executeCommand
@@ -501,16 +499,17 @@ metadata:
           success: true,
           data: JSON.stringify({
             kind: 'Secret',
-            metadata: { name: 'protected-secret', namespace: 'test' }
-          })
+            metadata: { name: 'protected-secret', namespace: 'test' },
+          }),
         })
         .mockResolvedValueOnce({
           success: false,
-          error: 'Error from server (Forbidden): secrets "protected-secret" is forbidden: User "test-user" cannot delete resource "secrets" in API group "" in the namespace "test"'
+          error:
+            'Error from server (Forbidden): secrets "protected-secret" is forbidden: User "test-user" cannot delete resource "secrets" in API group "" in the namespace "test"',
         });
 
       const result = await handleOcDelete(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Permission Error');
       expect(result.content[0].text).toContain('auth can-i delete');
@@ -521,7 +520,7 @@ metadata:
         resourceType: 'namespace',
         name: 'stuck-namespace',
         namespace: 'default',
-        confirm: true
+        confirm: true,
       };
 
       mockManager.executeCommand
@@ -529,16 +528,17 @@ metadata:
           success: true,
           data: JSON.stringify({
             kind: 'Namespace',
-            metadata: { name: 'stuck-namespace' }
-          })
+            metadata: { name: 'stuck-namespace' },
+          }),
         })
         .mockResolvedValueOnce({
           success: false,
-          error: 'namespace "stuck-namespace" has finalizers [kubernetes.io/pv-protection] preventing deletion'
+          error:
+            'namespace "stuck-namespace" has finalizers [kubernetes.io/pv-protection] preventing deletion',
         });
 
       const result = await handleOcDelete(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Delete Operation Failed');
       expect(result.content[0].text).toContain('Finalizer Blocking Deletion');
@@ -549,7 +549,7 @@ metadata:
         resourceType: 'namespace',
         name: 'app-namespace',
         namespace: 'default',
-        confirm: true
+        confirm: true,
       };
 
       mockManager.executeCommand
@@ -557,16 +557,16 @@ metadata:
           success: true,
           data: JSON.stringify({
             kind: 'Namespace',
-            metadata: { name: 'app-namespace' }
-          })
+            metadata: { name: 'app-namespace' },
+          }),
         })
         .mockResolvedValueOnce({
           success: false,
-          error: 'namespace "app-namespace" has dependent resources preventing deletion'
+          error: 'namespace "app-namespace" has dependent resources preventing deletion',
         });
 
       const result = await handleOcDelete(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Delete Operation Failed');
       expect(result.content[0].text).toContain('Dependency Error');
@@ -578,11 +578,11 @@ metadata:
       const params: OcDeleteParams = {
         resourceType: 'pod',
         all: true,
-        namespace: 'production'
+        namespace: 'production',
       };
 
       const result = await handleOcDelete(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Dangerous Delete Operation');
       expect(result.content[0].text).toContain('ALL resources');
@@ -592,11 +592,11 @@ metadata:
       const params: OcDeleteParams = {
         resourceType: 'configmap',
         labelSelector: 'temp=true',
-        allNamespaces: true
+        allNamespaces: true,
       };
 
       const result = await handleOcDelete(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Dangerous Delete Operation');
       expect(result.content[0].text).toContain('ALL namespaces');
@@ -607,25 +607,23 @@ metadata:
         resourceType: 'pod',
         all: true,
         namespace: 'test',
-        confirm: true
+        confirm: true,
       };
 
       mockManager.executeCommand
         .mockResolvedValueOnce({
           success: true,
           data: JSON.stringify({
-            items: [
-              { kind: 'Pod', metadata: { name: 'pod-1', namespace: 'test' } }
-            ]
-          })
+            items: [{ kind: 'Pod', metadata: { name: 'pod-1', namespace: 'test' } }],
+          }),
         })
         .mockResolvedValueOnce({
           success: true,
-          data: 'pod/pod-1 deleted'
+          data: 'pod/pod-1 deleted',
         });
 
       const result = await handleOcDelete(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Delete Operation Successful');
     });
@@ -638,7 +636,7 @@ metadata:
         name: 'test-app',
         namespace: 'test',
         cascade: 'foreground',
-        confirm: true
+        confirm: true,
       };
 
       mockManager.executeCommand
@@ -646,16 +644,16 @@ metadata:
           success: true,
           data: JSON.stringify({
             kind: 'Deployment',
-            metadata: { name: 'test-app', namespace: 'test' }
-          })
+            metadata: { name: 'test-app', namespace: 'test' },
+          }),
         })
         .mockResolvedValueOnce({
           success: true,
-          data: 'deployment.apps/test-app deleted'
+          data: 'deployment.apps/test-app deleted',
         });
 
       const result = await handleOcDelete(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Delete Operation Successful');
       expect(mockManager.executeCommand).toHaveBeenCalledWith(
@@ -671,7 +669,7 @@ metadata:
         namespace: 'test',
         wait: true,
         timeout: '60s',
-        confirm: true
+        confirm: true,
       };
 
       mockManager.executeCommand
@@ -679,20 +677,20 @@ metadata:
           success: true,
           data: JSON.stringify({
             kind: 'Pod',
-            metadata: { name: 'test-pod', namespace: 'test' }
-          })
+            metadata: { name: 'test-pod', namespace: 'test' },
+          }),
         })
         .mockResolvedValueOnce({
           success: true,
-          data: 'pod/test-pod deleted'
+          data: 'pod/test-pod deleted',
         })
         .mockResolvedValueOnce({
           success: true,
-          data: ''
+          data: '',
         });
 
       const result = await handleOcDelete(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Delete Operation Successful');
       expect(mockManager.executeCommand).toHaveBeenCalledWith(
@@ -706,18 +704,17 @@ metadata:
         resourceType: 'pod',
         name: 'maybe-exists',
         namespace: 'test',
-        ignore404: true
+        ignore404: true,
       };
 
       // Mock resource not found during discovery (returns empty result)
-      mockManager.executeCommand
-        .mockResolvedValueOnce({
-          success: true,
-          data: JSON.stringify({ items: [] }) // Empty result for discovery
-        });
+      mockManager.executeCommand.mockResolvedValueOnce({
+        success: true,
+        data: JSON.stringify({ items: [] }), // Empty result for discovery
+      });
 
       const result = await handleOcDelete(params);
-      
+
       expect(result.content).toBeDefined();
       // With ignore404, when no resources are found, it should show "No Resources Found"
       expect(result.content[0].text).toContain('No Resources Found for Deletion');
@@ -725,4 +722,3 @@ metadata:
     });
   });
 });
-

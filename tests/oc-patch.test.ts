@@ -18,7 +18,9 @@ describe('oc-patch tool', () => {
   describe('tool definition', () => {
     it('should have correct tool definition', () => {
       expect(ocPatchTool.name).toBe('oc_patch');
-      expect(ocPatchTool.description).toBe('Patch OpenShift resources with strategic merge, JSON merge, or JSON patch operations');
+      expect(ocPatchTool.description).toBe(
+        'Patch OpenShift resources with strategic merge, JSON merge, or JSON patch operations'
+      );
       expect(ocPatchTool.inputSchema.type).toBe('object');
       expect(ocPatchTool.inputSchema.required).toEqual(['resourceType', 'name', 'patch']);
     });
@@ -62,7 +64,7 @@ describe('oc-patch tool', () => {
         const args: OcPatchArgs = {
           resourceType: '',
           name: '',
-          patch: ''
+          patch: '',
         };
 
         const result = await handleOcPatch(args);
@@ -75,7 +77,7 @@ describe('oc-patch tool', () => {
         const args: OcPatchArgs = {
           resourceType: 'invalidresource',
           name: 'test',
-          patch: '{"metadata":{"labels":{"test":"value"}}}'
+          patch: '{"metadata":{"labels":{"test":"value"}}}',
         };
 
         const result = await handleOcPatch(args);
@@ -89,7 +91,7 @@ describe('oc-patch tool', () => {
           resourceType: 'pod',
           name: 'test-pod',
           patch: '{"metadata":{"labels":{"test":"value"}}}',
-          patchType: 'invalid' as any
+          patchType: 'invalid' as any,
         };
 
         const result = await handleOcPatch(args);
@@ -103,7 +105,7 @@ describe('oc-patch tool', () => {
           resourceType: 'pod',
           name: 'test-pod',
           patch: '{"metadata":{"labels":{"test":"value"}}}',
-          subresource: 'invalid' as any
+          subresource: 'invalid' as any,
         };
 
         const result = await handleOcPatch(args);
@@ -117,7 +119,7 @@ describe('oc-patch tool', () => {
           resourceType: 'node',
           name: 'test-node',
           patch: '{"metadata":{"labels":{"test":"value"}}}',
-          namespace: 'default'
+          namespace: 'default',
         };
 
         const result = await handleOcPatch(args);
@@ -131,7 +133,7 @@ describe('oc-patch tool', () => {
           resourceType: 'pod',
           name: 'test-pod',
           patch: '{"metadata":{"labels":{"test":"value"}}}',
-          namespace: 'default'
+          namespace: 'default',
         };
 
         mockManager.executeCommand.mockResolvedValue({
@@ -142,9 +144,9 @@ describe('oc-patch tool', () => {
               namespace: 'default',
               resourceVersion: '12345',
               generation: 1,
-              labels: { test: 'value' }
-            }
-          })
+              labels: { test: 'value' },
+            },
+          }),
         });
 
         const result = await handleOcPatch(args);
@@ -160,7 +162,7 @@ describe('oc-patch tool', () => {
           resourceType: 'pod',
           name: 'test-pod',
           patch: '{"metadata":{"labels":{"environment":"production"}}}',
-          namespace: 'default'
+          namespace: 'default',
         };
 
         mockManager.executeCommand.mockResolvedValue({
@@ -170,9 +172,9 @@ describe('oc-patch tool', () => {
               name: 'test-pod',
               namespace: 'default',
               resourceVersion: '12345',
-              labels: { environment: 'production' }
-            }
-          })
+              labels: { environment: 'production' },
+            },
+          }),
         });
 
         const result = await handleOcPatch(args);
@@ -193,7 +195,7 @@ describe('oc-patch tool', () => {
     environment: staging
 spec:
   replicas: 3`,
-          namespace: 'default'
+          namespace: 'default',
         };
 
         mockManager.executeCommand.mockResolvedValue({
@@ -203,10 +205,10 @@ spec:
               name: 'test-deploy',
               namespace: 'default',
               resourceVersion: '67890',
-              labels: { environment: 'staging' }
+              labels: { environment: 'staging' },
             },
-            spec: { replicas: 3 }
-          })
+            spec: { replicas: 3 },
+          }),
         });
 
         const result = await handleOcPatch(args);
@@ -220,12 +222,12 @@ spec:
           resourceType: 'pod',
           name: 'test-pod',
           patch: '{"metadata":{"labels":{"test":"value"}}}',
-          namespace: 'default'
+          namespace: 'default',
         };
 
         // Mock command execution failure due to OpenShiftManager not being properly initialized
         mockManager.executeCommand.mockResolvedValue(undefined as any);
-        
+
         const result = await handleOcPatch(args);
 
         expect(result.isError).toBe(true);
@@ -239,15 +241,15 @@ spec:
           resourceType: 'deployment',
           name: 'test-deploy',
           patch: '{"spec":{"replicas":5}}',
-          namespace: 'default'
+          namespace: 'default',
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: true,
           data: JSON.stringify({
             metadata: { name: 'test-deploy', resourceVersion: '12345' },
-            spec: { replicas: 5 }
-          })
+            spec: { replicas: 5 },
+          }),
         });
 
         await handleOcPatch(args);
@@ -264,15 +266,15 @@ spec:
           name: 'test-svc',
           patch: '{"spec":{"ports":[{"port":8080}]}}',
           patchType: 'merge',
-          namespace: 'default'
+          namespace: 'default',
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: true,
           data: JSON.stringify({
             metadata: { name: 'test-svc', resourceVersion: '12345' },
-            spec: { ports: [{ port: 8080 }] }
-          })
+            spec: { ports: [{ port: 8080 }] },
+          }),
         });
 
         await handleOcPatch(args);
@@ -289,15 +291,15 @@ spec:
           name: 'test-cm',
           patch: '[{"op":"add","path":"/data/newkey","value":"newvalue"}]',
           patchType: 'json',
-          namespace: 'default'
+          namespace: 'default',
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: true,
           data: JSON.stringify({
             metadata: { name: 'test-cm', resourceVersion: '12345' },
-            data: { newkey: 'newvalue' }
-          })
+            data: { newkey: 'newvalue' },
+          }),
         });
 
         await handleOcPatch(args);
@@ -316,14 +318,14 @@ spec:
           name: 'test-pod',
           patch: '{"metadata":{"labels":{"test":"value"}}}',
           namespace: 'default',
-          dryRun: true
+          dryRun: true,
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: true,
           data: JSON.stringify({
-            metadata: { name: 'test-pod', resourceVersion: '12345' }
-          })
+            metadata: { name: 'test-pod', resourceVersion: '12345' },
+          }),
         });
 
         const result = await handleOcPatch(args);
@@ -341,14 +343,14 @@ spec:
           name: 'test-deploy',
           patch: '{"spec":{"replicas":3}}',
           namespace: 'default',
-          force: true
+          force: true,
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: true,
           data: JSON.stringify({
-            metadata: { name: 'test-deploy', resourceVersion: '12345' }
-          })
+            metadata: { name: 'test-deploy', resourceVersion: '12345' },
+          }),
         });
 
         await handleOcPatch(args);
@@ -365,14 +367,14 @@ spec:
           name: 'test-svc',
           patch: '{"spec":{"type":"ClusterIP"}}',
           namespace: 'default',
-          fieldManager: 'custom-manager'
+          fieldManager: 'custom-manager',
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: true,
           data: JSON.stringify({
-            metadata: { name: 'test-svc', resourceVersion: '12345' }
-          })
+            metadata: { name: 'test-svc', resourceVersion: '12345' },
+          }),
         });
 
         await handleOcPatch(args);
@@ -389,15 +391,15 @@ spec:
           name: 'test-deploy',
           patch: '{"replicas":5}',
           namespace: 'default',
-          subresource: 'scale'
+          subresource: 'scale',
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: true,
           data: JSON.stringify({
             metadata: { name: 'test-deploy', resourceVersion: '12345' },
-            spec: { replicas: 5 }
-          })
+            spec: { replicas: 5 },
+          }),
         });
 
         await handleOcPatch(args);
@@ -414,14 +416,14 @@ spec:
           name: 'test-deploy',
           patch: '{"spec":{"replicas":3}}',
           namespace: 'default',
-          recordHistory: true
+          recordHistory: true,
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: true,
           data: JSON.stringify({
-            metadata: { name: 'test-deploy', resourceVersion: '12345' }
-          })
+            metadata: { name: 'test-deploy', resourceVersion: '12345' },
+          }),
         });
 
         await handleOcPatch(args);
@@ -438,14 +440,14 @@ spec:
         const args: OcPatchArgs = {
           resourceType: 'node',
           name: 'test-node',
-          patch: '{"metadata":{"labels":{"environment":"production"}}}'
+          patch: '{"metadata":{"labels":{"environment":"production"}}}',
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: true,
           data: JSON.stringify({
-            metadata: { name: 'test-node', resourceVersion: '12345' }
-          })
+            metadata: { name: 'test-node', resourceVersion: '12345' },
+          }),
         });
 
         await handleOcPatch(args);
@@ -460,14 +462,14 @@ spec:
         const args: OcPatchArgs = {
           resourceType: 'namespace',
           name: 'test-namespace',
-          patch: '{"metadata":{"labels":{"environment":"test"}}}'
+          patch: '{"metadata":{"labels":{"environment":"test"}}}',
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: true,
           data: JSON.stringify({
-            metadata: { name: 'test-namespace', resourceVersion: '12345' }
-          })
+            metadata: { name: 'test-namespace', resourceVersion: '12345' },
+          }),
         });
 
         await handleOcPatch(args);
@@ -489,12 +491,12 @@ spec:
           resourceType: 'pod',
           name: 'nonexistent-pod',
           patch: '{"metadata":{"labels":{"test":"value"}}}',
-          namespace: 'default'
+          namespace: 'default',
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: false,
-          error: 'pods "nonexistent-pod" not found'
+          error: 'pods "nonexistent-pod" not found',
         });
 
         const result = await handleOcPatch(args);
@@ -510,12 +512,13 @@ spec:
           resourceType: 'deployment',
           name: 'test-deploy',
           patch: '{"spec":{"replicas":5}}',
-          namespace: 'restricted-namespace'
+          namespace: 'restricted-namespace',
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: false,
-          error: 'forbidden: User "test-user" cannot patch resource "deployments" in API group "apps" in the namespace "restricted-namespace"'
+          error:
+            'forbidden: User "test-user" cannot patch resource "deployments" in API group "apps" in the namespace "restricted-namespace"',
         });
 
         const result = await handleOcPatch(args);
@@ -531,7 +534,7 @@ spec:
           resourceType: 'pod',
           name: 'test-pod',
           patch: '{"metadata":{"labels":{"test":"value"}}}',
-          namespace: 'default'
+          namespace: 'default',
         };
 
         mockManager.executeCommand.mockRejectedValue(new Error('Network timeout'));
@@ -551,7 +554,7 @@ spec:
           name: 'test-deploy',
           patch: '{"spec":{"replicas":3}}',
           namespace: 'production',
-          patchType: 'strategic'
+          patchType: 'strategic',
         };
 
         const mockResponse = {
@@ -561,20 +564,18 @@ spec:
             resourceVersion: '12345',
             generation: 5,
             labels: { app: 'test', environment: 'production' },
-            annotations: { 'deployment.kubernetes.io/revision': '3' }
+            annotations: { 'deployment.kubernetes.io/revision': '3' },
           },
           status: {
             replicas: 3,
             readyReplicas: 3,
-            conditions: [
-              { type: 'Available', status: 'True', reason: 'MinimumReplicasAvailable' }
-            ]
-          }
+            conditions: [{ type: 'Available', status: 'True', reason: 'MinimumReplicasAvailable' }],
+          },
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: true,
-          data: JSON.stringify(mockResponse)
+          data: JSON.stringify(mockResponse),
         });
 
         const result = await handleOcPatch(args);
@@ -599,12 +600,12 @@ spec:
           resourceType: 'pod',
           name: 'test-pod',
           patch: '{"metadata":{"labels":{"test":"value"}}}',
-          namespace: 'default'
+          namespace: 'default',
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: true,
-          data: 'pod/test-pod patched'
+          data: 'pod/test-pod patched',
         });
 
         const result = await handleOcPatch(args);
@@ -620,14 +621,14 @@ spec:
           resourceType: 'service',
           name: 'test-svc',
           patch: '{"spec":{"type":"NodePort"}}',
-          namespace: 'default'
+          namespace: 'default',
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: true,
           data: JSON.stringify({
-            metadata: { name: 'test-svc', resourceVersion: '12345' }
-          })
+            metadata: { name: 'test-svc', resourceVersion: '12345' },
+          }),
         });
 
         const result = await handleOcPatch(args);
@@ -646,22 +647,22 @@ spec:
           name: 'test-pod',
           patch: '{"metadata":{"labels":{"test":"value"}}}',
           namespace: 'default',
-          context: 'test-cluster'
+          context: 'test-cluster',
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: true,
           data: JSON.stringify({
-            metadata: { name: 'test-pod', resourceVersion: '12345' }
-          })
+            metadata: { name: 'test-pod', resourceVersion: '12345' },
+          }),
         });
 
         await handleOcPatch(args);
 
-        expect(mockManager.executeCommand).toHaveBeenCalledWith(
-          expect.any(Array),
-          { context: 'test-cluster', timeout: 30000 }
-        );
+        expect(mockManager.executeCommand).toHaveBeenCalledWith(expect.any(Array), {
+          context: 'test-cluster',
+          timeout: 30000,
+        });
       });
 
       it('should use default timeout of 30 seconds', async () => {
@@ -669,22 +670,22 @@ spec:
           resourceType: 'deployment',
           name: 'test-deploy',
           patch: '{"spec":{"replicas":5}}',
-          namespace: 'default'
+          namespace: 'default',
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: true,
           data: JSON.stringify({
-            metadata: { name: 'test-deploy', resourceVersion: '12345' }
-          })
+            metadata: { name: 'test-deploy', resourceVersion: '12345' },
+          }),
         });
 
         await handleOcPatch(args);
 
-        expect(mockManager.executeCommand).toHaveBeenCalledWith(
-          expect.any(Array),
-          { context: undefined, timeout: 30000 }
-        );
+        expect(mockManager.executeCommand).toHaveBeenCalledWith(expect.any(Array), {
+          context: undefined,
+          timeout: 30000,
+        });
       });
     });
   });

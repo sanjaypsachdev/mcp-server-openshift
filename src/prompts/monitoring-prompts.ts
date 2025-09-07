@@ -2,29 +2,31 @@ import { Prompt } from '@modelcontextprotocol/sdk/types.js';
 
 export const monitoringPromptsPrompt: Prompt = {
   name: 'monitoring-prompts',
-  description: 'Comprehensive monitoring and observability guidance for OpenShift clusters covering metrics, logging, alerting, and performance analysis',
+  description:
+    'Comprehensive monitoring and observability guidance for OpenShift clusters covering metrics, logging, alerting, and performance analysis',
   arguments: [
     {
       name: 'scenario',
-      description: 'Monitoring scenario (cluster, application, performance, troubleshooting, capacity, security)',
-      required: true
+      description:
+        'Monitoring scenario (cluster, application, performance, troubleshooting, capacity, security)',
+      required: true,
     },
     {
       name: 'target',
       description: 'Target to monitor (pod, deployment, service, node, namespace, or cluster-wide)',
-      required: false
+      required: false,
     },
     {
       name: 'namespace',
       description: 'Namespace/project to focus monitoring on',
-      required: false
+      required: false,
     },
     {
       name: 'timeRange',
       description: 'Time range for monitoring (1h, 6h, 24h, 7d)',
-      required: false
-    }
-  ]
+      required: false,
+    },
+  ],
 };
 
 export function generateMonitoringPrompts(args: {
@@ -34,7 +36,7 @@ export function generateMonitoringPrompts(args: {
   timeRange?: string;
 }): string {
   const { scenario, target, namespace, timeRange } = args;
-  
+
   return `# OpenShift Monitoring & Observability Guide
 
 You are setting up monitoring and observability for an OpenShift cluster. Follow this comprehensive monitoring methodology:

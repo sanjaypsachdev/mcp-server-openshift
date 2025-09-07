@@ -7,17 +7,17 @@ import type { OcLogsParams } from '../src/models/tool-models.js';
 vi.mock('../src/utils/openshift-manager.js', () => ({
   OpenShiftManager: {
     getInstance: vi.fn(() => ({
-      executeCommand: vi.fn()
-    }))
-  }
+      executeCommand: vi.fn(),
+    })),
+  },
 }));
 
 describe('oc-logs tool', () => {
   let mockManager: any;
-  
+
   beforeEach(() => {
     mockManager = {
-      executeCommand: vi.fn()
+      executeCommand: vi.fn(),
     };
     vi.mocked(OpenShiftManager.getInstance).mockReturnValue(mockManager);
   });
@@ -26,9 +26,9 @@ describe('oc-logs tool', () => {
     it('should validate basic parameters successfully', () => {
       const params: OcLogsParams = {
         name: 'test-pod',
-        namespace: 'test'
+        namespace: 'test',
       };
-      
+
       const result = validateLogsParameters(params);
       expect(result.valid).toBe(true);
     });
@@ -38,9 +38,9 @@ describe('oc-logs tool', () => {
         name: 'test-pod',
         namespace: 'test',
         since: '5m',
-        sinceTime: '2023-01-01T12:00:00Z'
+        sinceTime: '2023-01-01T12:00:00Z',
       };
-      
+
       const result = validateLogsParameters(params);
       expect(result.valid).toBe(false);
       expect(result.error).toContain('Cannot specify both "since" and "sinceTime"');
@@ -50,9 +50,9 @@ describe('oc-logs tool', () => {
       const params: OcLogsParams = {
         name: 'test-pod',
         namespace: 'test',
-        since: 'invalid-format'
+        since: 'invalid-format',
       };
-      
+
       const result = validateLogsParameters(params);
       expect(result.valid).toBe(false);
       expect(result.error).toContain('Since must be in format');
@@ -60,14 +60,14 @@ describe('oc-logs tool', () => {
 
     it('should accept valid since formats', () => {
       const validFormats = ['5s', '2m', '3h', '1d'];
-      
+
       validFormats.forEach(since => {
         const params: OcLogsParams = {
           name: 'test-pod',
           namespace: 'test',
-          since
+          since,
         };
-        
+
         const result = validateLogsParameters(params);
         expect(result.valid).toBe(true);
       });
@@ -77,9 +77,9 @@ describe('oc-logs tool', () => {
       const params: OcLogsParams = {
         name: 'test-pod',
         namespace: 'test',
-        sinceTime: 'invalid-time'
+        sinceTime: 'invalid-time',
       };
-      
+
       const result = validateLogsParameters(params);
       expect(result.valid).toBe(false);
       expect(result.error).toContain('sinceTime must be in RFC3339 format');
@@ -89,9 +89,9 @@ describe('oc-logs tool', () => {
       const params: OcLogsParams = {
         name: 'test-pod',
         namespace: 'test',
-        sinceTime: '2023-01-01T12:00:00Z'
+        sinceTime: '2023-01-01T12:00:00Z',
       };
-      
+
       const result = validateLogsParameters(params);
       expect(result.valid).toBe(true);
     });
@@ -100,9 +100,9 @@ describe('oc-logs tool', () => {
       const params: OcLogsParams = {
         name: 'test-pod',
         namespace: 'test',
-        tail: -5
+        tail: -5,
       };
-      
+
       const result = validateLogsParameters(params);
       expect(result.valid).toBe(false);
       expect(result.error).toContain('tail must be >= -1');
@@ -110,14 +110,14 @@ describe('oc-logs tool', () => {
 
     it('should accept valid tail values', () => {
       const validTails = [-1, 0, 10, 100];
-      
+
       validTails.forEach(tail => {
         const params: OcLogsParams = {
           name: 'test-pod',
           namespace: 'test',
-          tail
+          tail,
         };
-        
+
         const result = validateLogsParameters(params);
         expect(result.valid).toBe(true);
       });
@@ -128,9 +128,9 @@ describe('oc-logs tool', () => {
         name: 'test-pod',
         namespace: 'test',
         previous: true,
-        follow: true
+        follow: true,
       };
-      
+
       const result = validateLogsParameters(params);
       expect(result.valid).toBe(false);
       expect(result.error).toContain('Cannot use "previous" and "follow" together');
@@ -141,9 +141,9 @@ describe('oc-logs tool', () => {
         name: 'test-deployment',
         namespace: 'test',
         resourceType: 'deployment',
-        allContainers: true
+        allContainers: true,
       };
-      
+
       const result = validateLogsParameters(params);
       expect(result.valid).toBe(false);
       expect(result.error).toContain('allContainers option only works with resourceType "pod"');
@@ -154,9 +154,9 @@ describe('oc-logs tool', () => {
         name: 'test-deployment',
         namespace: 'test',
         resourceType: 'deployment',
-        selector: 'app=test'
+        selector: 'app=test',
       };
-      
+
       const result = validateLogsParameters(params);
       expect(result.valid).toBe(false);
       expect(result.error).toContain('selector option only works with resourceType "pod"');
@@ -167,7 +167,7 @@ describe('oc-logs tool', () => {
     it('should retrieve logs from single container pod successfully', async () => {
       const params: OcLogsParams = {
         name: 'test-pod',
-        namespace: 'test'
+        namespace: 'test',
       };
 
       // Mock resource discovery
@@ -178,19 +178,19 @@ describe('oc-logs tool', () => {
             kind: 'Pod',
             metadata: { name: 'test-pod' },
             spec: {
-              containers: [{ name: 'main' }]
+              containers: [{ name: 'main' }],
             },
-            status: { phase: 'Running' }
-          })
+            status: { phase: 'Running' },
+          }),
         })
         // Mock logs retrieval
         .mockResolvedValueOnce({
           success: true,
-          data: 'Log line 1\nLog line 2\nLog line 3'
+          data: 'Log line 1\nLog line 2\nLog line 3',
         });
 
       const result = await handleOcLogs(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Logs Retrieved Successfully');
       expect(result.content[0].text).toContain('Log line 1');
@@ -200,28 +200,24 @@ describe('oc-logs tool', () => {
     it('should handle multi-container pod requiring container selection', async () => {
       const params: OcLogsParams = {
         name: 'multi-container-pod',
-        namespace: 'test'
+        namespace: 'test',
       };
 
       // Mock resource discovery with multiple containers
-      mockManager.executeCommand
-        .mockResolvedValueOnce({
-          success: true,
-          data: JSON.stringify({
-            kind: 'Pod',
-            metadata: { name: 'multi-container-pod' },
-            spec: {
-              containers: [
-                { name: 'web' },
-                { name: 'sidecar' }
-              ]
-            },
-            status: { phase: 'Running' }
-          })
-        });
+      mockManager.executeCommand.mockResolvedValueOnce({
+        success: true,
+        data: JSON.stringify({
+          kind: 'Pod',
+          metadata: { name: 'multi-container-pod' },
+          spec: {
+            containers: [{ name: 'web' }, { name: 'sidecar' }],
+          },
+          status: { phase: 'Running' },
+        }),
+      });
 
       const result = await handleOcLogs(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Container Selection Required');
       expect(result.content[0].text).toContain('web');
@@ -233,7 +229,7 @@ describe('oc-logs tool', () => {
       const params: OcLogsParams = {
         name: 'multi-container-pod',
         namespace: 'test',
-        container: 'web'
+        container: 'web',
       };
 
       // Mock resource discovery
@@ -244,22 +240,19 @@ describe('oc-logs tool', () => {
             kind: 'Pod',
             metadata: { name: 'multi-container-pod' },
             spec: {
-              containers: [
-                { name: 'web' },
-                { name: 'sidecar' }
-              ]
+              containers: [{ name: 'web' }, { name: 'sidecar' }],
             },
-            status: { phase: 'Running' }
-          })
+            status: { phase: 'Running' },
+          }),
         })
         // Mock logs retrieval
         .mockResolvedValueOnce({
           success: true,
-          data: 'Web container log line 1\nWeb container log line 2'
+          data: 'Web container log line 1\nWeb container log line 2',
         });
 
       const result = await handleOcLogs(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Logs Retrieved Successfully');
       expect(result.content[0].text).toContain('Web container log line 1');
@@ -270,7 +263,7 @@ describe('oc-logs tool', () => {
       const params: OcLogsParams = {
         name: 'multi-container-pod',
         namespace: 'test',
-        allContainers: true
+        allContainers: true,
       };
 
       // Mock resource discovery
@@ -281,27 +274,24 @@ describe('oc-logs tool', () => {
             kind: 'Pod',
             metadata: { name: 'multi-container-pod' },
             spec: {
-              containers: [
-                { name: 'web' },
-                { name: 'sidecar' }
-              ]
+              containers: [{ name: 'web' }, { name: 'sidecar' }],
             },
-            status: { phase: 'Running' }
-          })
+            status: { phase: 'Running' },
+          }),
         })
         // Mock logs retrieval for web container
         .mockResolvedValueOnce({
           success: true,
-          data: 'Web container logs'
+          data: 'Web container logs',
         })
         // Mock logs retrieval for sidecar container
         .mockResolvedValueOnce({
           success: true,
-          data: 'Sidecar container logs'
+          data: 'Sidecar container logs',
         });
 
       const result = await handleOcLogs(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Logs Retrieved Successfully');
       expect(result.content[0].text).toContain('Web container logs');
@@ -312,18 +302,17 @@ describe('oc-logs tool', () => {
     it('should handle resource not found', async () => {
       const params: OcLogsParams = {
         name: 'nonexistent-pod',
-        namespace: 'test'
+        namespace: 'test',
       };
 
       // Mock resource discovery failure
-      mockManager.executeCommand
-        .mockResolvedValueOnce({
-          success: false,
-          error: 'pods "nonexistent-pod" not found'
-        });
+      mockManager.executeCommand.mockResolvedValueOnce({
+        success: false,
+        error: 'pods "nonexistent-pod" not found',
+      });
 
       const result = await handleOcLogs(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Log Retrieval Failed');
       expect(result.content[0].text).toContain('Resource not available');
@@ -333,7 +322,7 @@ describe('oc-logs tool', () => {
       const params: OcLogsParams = {
         name: 'dummy', // Required but not used with selector
         namespace: 'test',
-        selector: 'app=web'
+        selector: 'app=web',
       };
 
       // Mock pod discovery with selector
@@ -343,18 +332,18 @@ describe('oc-logs tool', () => {
           data: JSON.stringify({
             items: [
               { kind: 'Pod', metadata: { name: 'web-1' } },
-              { kind: 'Pod', metadata: { name: 'web-2' } }
-            ]
-          })
+              { kind: 'Pod', metadata: { name: 'web-2' } },
+            ],
+          }),
         })
         // Mock logs retrieval
         .mockResolvedValueOnce({
           success: true,
-          data: 'Logs from selector-based query'
+          data: 'Logs from selector-based query',
         });
 
       const result = await handleOcLogs(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Logs Retrieved Successfully');
       expect(result.content[0].text).toContain('Logs from selector-based query');
@@ -364,18 +353,17 @@ describe('oc-logs tool', () => {
       const params: OcLogsParams = {
         name: 'dummy',
         namespace: 'test',
-        selector: 'app=nonexistent'
+        selector: 'app=nonexistent',
       };
 
       // Mock empty pod discovery
-      mockManager.executeCommand
-        .mockResolvedValueOnce({
-          success: true,
-          data: JSON.stringify({ items: [] })
-        });
+      mockManager.executeCommand.mockResolvedValueOnce({
+        success: true,
+        data: JSON.stringify({ items: [] }),
+      });
 
       const result = await handleOcLogs(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Log Retrieval Failed');
       expect(result.content[0].text).toContain('No pods found matching selector');
@@ -385,7 +373,7 @@ describe('oc-logs tool', () => {
       const params: OcLogsParams = {
         name: 'test-deployment',
         namespace: 'test',
-        resourceType: 'deployment'
+        resourceType: 'deployment',
       };
 
       // Mock resource discovery
@@ -398,21 +386,21 @@ describe('oc-logs tool', () => {
             spec: {
               template: {
                 spec: {
-                  containers: [{ name: 'app' }]
-                }
-              }
+                  containers: [{ name: 'app' }],
+                },
+              },
             },
-            status: { readyReplicas: 2, replicas: 2 }
-          })
+            status: { readyReplicas: 2, replicas: 2 },
+          }),
         })
         // Mock logs retrieval
         .mockResolvedValueOnce({
           success: true,
-          data: 'Deployment log line 1\nDeployment log line 2'
+          data: 'Deployment log line 1\nDeployment log line 2',
         });
 
       const result = await handleOcLogs(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Logs Retrieved Successfully');
       expect(result.content[0].text).toContain('Deployment log line 1');
@@ -422,7 +410,7 @@ describe('oc-logs tool', () => {
       const params: OcLogsParams = {
         name: 'test-build-1',
         namespace: 'test',
-        resourceType: 'build'
+        resourceType: 'build',
       };
 
       // Mock resource discovery
@@ -432,17 +420,17 @@ describe('oc-logs tool', () => {
           data: JSON.stringify({
             kind: 'Build',
             metadata: { name: 'test-build-1' },
-            status: { phase: 'Complete' }
-          })
+            status: { phase: 'Complete' },
+          }),
         })
         // Mock logs retrieval
         .mockResolvedValueOnce({
           success: true,
-          data: 'Build started\nBuild step 1\nBuild completed successfully'
+          data: 'Build started\nBuild step 1\nBuild completed successfully',
         });
 
       const result = await handleOcLogs(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Logs Retrieved Successfully');
       expect(result.content[0].text).toContain('Build started');
@@ -453,7 +441,7 @@ describe('oc-logs tool', () => {
       const params: OcLogsParams = {
         name: 'test-pod',
         namespace: 'test',
-        timestamps: true
+        timestamps: true,
       };
 
       // Mock resource discovery
@@ -464,17 +452,17 @@ describe('oc-logs tool', () => {
             kind: 'Pod',
             metadata: { name: 'test-pod' },
             spec: { containers: [{ name: 'main' }] },
-            status: { phase: 'Running' }
-          })
+            status: { phase: 'Running' },
+          }),
         })
         // Mock logs retrieval with timestamps
         .mockResolvedValueOnce({
           success: true,
-          data: '2023-01-01T12:00:00Z Log line 1\n2023-01-01T12:00:01Z Log line 2'
+          data: '2023-01-01T12:00:00Z Log line 1\n2023-01-01T12:00:01Z Log line 2',
         });
 
       const result = await handleOcLogs(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Logs Retrieved Successfully');
       expect(result.content[0].text).toContain('**Include Timestamps**: Yes');
@@ -489,7 +477,7 @@ describe('oc-logs tool', () => {
       const params: OcLogsParams = {
         name: 'test-pod',
         namespace: 'test',
-        tail: 10
+        tail: 10,
       };
 
       // Mock resource discovery
@@ -500,17 +488,17 @@ describe('oc-logs tool', () => {
             kind: 'Pod',
             metadata: { name: 'test-pod' },
             spec: { containers: [{ name: 'main' }] },
-            status: { phase: 'Running' }
-          })
+            status: { phase: 'Running' },
+          }),
         })
         // Mock logs retrieval
         .mockResolvedValueOnce({
           success: true,
-          data: 'Last 10 lines of logs'
+          data: 'Last 10 lines of logs',
         });
 
       const result = await handleOcLogs(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Logs Retrieved Successfully');
       expect(mockManager.executeCommand).toHaveBeenCalledWith(
@@ -523,7 +511,7 @@ describe('oc-logs tool', () => {
       const params: OcLogsParams = {
         name: 'test-pod',
         namespace: 'test',
-        since: '5m'
+        since: '5m',
       };
 
       // Mock resource discovery
@@ -534,17 +522,17 @@ describe('oc-logs tool', () => {
             kind: 'Pod',
             metadata: { name: 'test-pod' },
             spec: { containers: [{ name: 'main' }] },
-            status: { phase: 'Running' }
-          })
+            status: { phase: 'Running' },
+          }),
         })
         // Mock logs retrieval
         .mockResolvedValueOnce({
           success: true,
-          data: 'Recent logs from last 5 minutes'
+          data: 'Recent logs from last 5 minutes',
         });
 
       const result = await handleOcLogs(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Logs Retrieved Successfully');
       expect(mockManager.executeCommand).toHaveBeenCalledWith(
@@ -557,7 +545,7 @@ describe('oc-logs tool', () => {
       const params: OcLogsParams = {
         name: 'test-pod',
         namespace: 'test',
-        previous: true
+        previous: true,
       };
 
       // Mock resource discovery
@@ -568,17 +556,17 @@ describe('oc-logs tool', () => {
             kind: 'Pod',
             metadata: { name: 'test-pod' },
             spec: { containers: [{ name: 'main' }] },
-            status: { phase: 'Running' }
-          })
+            status: { phase: 'Running' },
+          }),
         })
         // Mock logs retrieval
         .mockResolvedValueOnce({
           success: true,
-          data: 'Previous container logs'
+          data: 'Previous container logs',
         });
 
       const result = await handleOcLogs(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Logs Retrieved Successfully');
       expect(result.content[0].text).toContain('Previous container logs');
@@ -591,7 +579,7 @@ describe('oc-logs tool', () => {
     it('should handle no logs found', async () => {
       const params: OcLogsParams = {
         name: 'test-pod',
-        namespace: 'test'
+        namespace: 'test',
       };
 
       // Mock resource discovery
@@ -602,17 +590,17 @@ describe('oc-logs tool', () => {
             kind: 'Pod',
             metadata: { name: 'test-pod' },
             spec: { containers: [{ name: 'main' }] },
-            status: { phase: 'Running' }
-          })
+            status: { phase: 'Running' },
+          }),
         })
         // Mock empty logs retrieval
         .mockResolvedValueOnce({
           success: true,
-          data: ''
+          data: '',
         });
 
       const result = await handleOcLogs(params);
-      
+
       expect(result.content).toBeDefined();
       // When no logs are returned but command succeeds, it shows success with 0 lines
       expect(result.content[0].text).toContain('Logs Retrieved Successfully');
@@ -622,7 +610,7 @@ describe('oc-logs tool', () => {
     it('should handle logs retrieval errors', async () => {
       const params: OcLogsParams = {
         name: 'test-pod',
-        namespace: 'test'
+        namespace: 'test',
       };
 
       // Mock resource discovery
@@ -633,17 +621,17 @@ describe('oc-logs tool', () => {
             kind: 'Pod',
             metadata: { name: 'test-pod' },
             spec: { containers: [{ name: 'main' }] },
-            status: { phase: 'Running' }
-          })
+            status: { phase: 'Running' },
+          }),
         })
         // Mock logs retrieval failure
         .mockResolvedValueOnce({
           success: false,
-          error: 'container "main" in pod "test-pod" is not running'
+          error: 'container "main" in pod "test-pod" is not running',
         });
 
       const result = await handleOcLogs(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Logs Retrieved Successfully');
       expect(result.content[0].text).toContain('Errors Encountered');
@@ -654,7 +642,7 @@ describe('oc-logs tool', () => {
       const params: OcLogsParams = {
         name: 'test-pod',
         namespace: 'test',
-        follow: true
+        follow: true,
       };
 
       // Mock resource discovery
@@ -665,17 +653,17 @@ describe('oc-logs tool', () => {
             kind: 'Pod',
             metadata: { name: 'test-pod' },
             spec: { containers: [{ name: 'main' }] },
-            status: { phase: 'Running' }
-          })
+            status: { phase: 'Running' },
+          }),
         })
         // Mock logs retrieval
         .mockResolvedValueOnce({
           success: true,
-          data: 'Streaming logs...'
+          data: 'Streaming logs...',
         });
 
       const result = await handleOcLogs(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('**Follow Mode**: Yes (streaming)');
       expect(mockManager.executeCommand).toHaveBeenCalledWith(
@@ -688,7 +676,7 @@ describe('oc-logs tool', () => {
       const params: OcLogsParams = {
         name: 'test-pod',
         namespace: 'test',
-        limitBytes: 1024
+        limitBytes: 1024,
       };
 
       // Mock resource discovery
@@ -699,17 +687,17 @@ describe('oc-logs tool', () => {
             kind: 'Pod',
             metadata: { name: 'test-pod' },
             spec: { containers: [{ name: 'main' }] },
-            status: { phase: 'Running' }
-          })
+            status: { phase: 'Running' },
+          }),
         })
         // Mock logs retrieval with limited bytes
         .mockResolvedValueOnce({
           success: true,
-          data: 'Limited logs content...'
+          data: 'Limited logs content...',
         });
 
       const result = await handleOcLogs(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Logs Retrieved Successfully');
       expect(mockManager.executeCommand).toHaveBeenCalledWith(
@@ -722,7 +710,7 @@ describe('oc-logs tool', () => {
       const params: OcLogsParams = {
         name: 'test-buildconfig',
         namespace: 'test',
-        resourceType: 'buildconfig'
+        resourceType: 'buildconfig',
       };
 
       // Mock resource discovery
@@ -731,17 +719,17 @@ describe('oc-logs tool', () => {
           success: true,
           data: JSON.stringify({
             kind: 'BuildConfig',
-            metadata: { name: 'test-buildconfig' }
-          })
+            metadata: { name: 'test-buildconfig' },
+          }),
         })
         // Mock logs retrieval
         .mockResolvedValueOnce({
           success: true,
-          data: 'BuildConfig logs from latest build'
+          data: 'BuildConfig logs from latest build',
         });
 
       const result = await handleOcLogs(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Logs Retrieved Successfully');
       expect(result.content[0].text).toContain('BuildConfig logs from latest build');
@@ -751,7 +739,7 @@ describe('oc-logs tool', () => {
       const params: OcLogsParams = {
         name: 'test-job',
         namespace: 'test',
-        resourceType: 'job'
+        resourceType: 'job',
       };
 
       // Mock resource discovery
@@ -760,17 +748,17 @@ describe('oc-logs tool', () => {
           success: true,
           data: JSON.stringify({
             kind: 'Job',
-            metadata: { name: 'test-job' }
-          })
+            metadata: { name: 'test-job' },
+          }),
         })
         // Mock logs retrieval
         .mockResolvedValueOnce({
           success: true,
-          data: 'Job execution logs'
+          data: 'Job execution logs',
         });
 
       const result = await handleOcLogs(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Logs Retrieved Successfully');
       expect(result.content[0].text).toContain('Job execution logs');
@@ -783,7 +771,7 @@ describe('oc-logs tool', () => {
         name: 'dummy',
         namespace: 'test',
         selector: 'app=test',
-        maxLogRequests: 3
+        maxLogRequests: 3,
       };
 
       // Mock pod discovery
@@ -793,18 +781,18 @@ describe('oc-logs tool', () => {
           data: JSON.stringify({
             items: [
               { kind: 'Pod', metadata: { name: 'pod-1' } },
-              { kind: 'Pod', metadata: { name: 'pod-2' } }
-            ]
-          })
+              { kind: 'Pod', metadata: { name: 'pod-2' } },
+            ],
+          }),
         })
         // Mock logs retrieval
         .mockResolvedValueOnce({
           success: true,
-          data: 'Logs with limited concurrent requests'
+          data: 'Logs with limited concurrent requests',
         });
 
       const result = await handleOcLogs(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Logs Retrieved Successfully');
       expect(mockManager.executeCommand).toHaveBeenCalledWith(
@@ -817,7 +805,7 @@ describe('oc-logs tool', () => {
       const params: OcLogsParams = {
         name: 'test-pod',
         namespace: 'test',
-        sinceTime: '2023-01-01T12:00:00Z'
+        sinceTime: '2023-01-01T12:00:00Z',
       };
 
       // Mock resource discovery
@@ -828,17 +816,17 @@ describe('oc-logs tool', () => {
             kind: 'Pod',
             metadata: { name: 'test-pod' },
             spec: { containers: [{ name: 'main' }] },
-            status: { phase: 'Running' }
-          })
+            status: { phase: 'Running' },
+          }),
         })
         // Mock logs retrieval
         .mockResolvedValueOnce({
           success: true,
-          data: 'Logs since specific timestamp'
+          data: 'Logs since specific timestamp',
         });
 
       const result = await handleOcLogs(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Logs Retrieved Successfully');
       expect(mockManager.executeCommand).toHaveBeenCalledWith(
@@ -851,7 +839,7 @@ describe('oc-logs tool', () => {
       const params: OcLogsParams = {
         name: 'multi-container-pod',
         namespace: 'test',
-        allContainers: true
+        allContainers: true,
       };
 
       // Mock resource discovery
@@ -862,27 +850,24 @@ describe('oc-logs tool', () => {
             kind: 'Pod',
             metadata: { name: 'multi-container-pod' },
             spec: {
-              containers: [
-                { name: 'web' },
-                { name: 'sidecar' }
-              ]
+              containers: [{ name: 'web' }, { name: 'sidecar' }],
             },
-            status: { phase: 'Running' }
-          })
+            status: { phase: 'Running' },
+          }),
         })
         // Mock successful logs retrieval for web container
         .mockResolvedValueOnce({
           success: true,
-          data: 'Web container logs'
+          data: 'Web container logs',
         })
         // Mock failed logs retrieval for sidecar container
         .mockResolvedValueOnce({
           success: false,
-          error: 'container "sidecar" is not ready'
+          error: 'container "sidecar" is not ready',
         });
 
       const result = await handleOcLogs(params);
-      
+
       expect(result.content).toBeDefined();
       expect(result.content[0].text).toContain('Logs Retrieved Successfully');
       expect(result.content[0].text).toContain('Web container logs');
