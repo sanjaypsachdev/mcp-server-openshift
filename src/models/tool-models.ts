@@ -173,6 +173,48 @@ export const OcDescribeSchema = z.object({
   output: z.enum(['text', 'yaml', 'json', 'human-readable']).optional().default('human-readable').describe('Output format: text (default oc describe), yaml, json, or human-readable (concise summary)')
 });
 
+export const OcPatchSchema = z.object({
+  resourceType: z.enum([
+    'pod', 'pods',
+    'deployment', 'deployments', 'deploy',
+    'deploymentconfig', 'deploymentconfigs', 'dc',
+    'service', 'services', 'svc',
+    'route', 'routes',
+    'configmap', 'configmaps', 'cm',
+    'secret', 'secrets',
+    'persistentvolumeclaim', 'persistentvolumeclaims', 'pvc',
+    'persistentvolume', 'persistentvolumes', 'pv',
+    'serviceaccount', 'serviceaccounts', 'sa',
+    'role', 'roles',
+    'rolebinding', 'rolebindings',
+    'clusterrole', 'clusterroles',
+    'clusterrolebinding', 'clusterrolebindings',
+    'networkpolicy', 'networkpolicies',
+    'ingress', 'ingresses',
+    'horizontalpodautoscaler', 'hpa',
+    'job', 'jobs',
+    'cronjob', 'cronjobs',
+    'daemonset', 'daemonsets', 'ds',
+    'statefulset', 'statefulsets', 'sts',
+    'replicaset', 'replicasets', 'rs',
+    'node', 'nodes',
+    'namespace', 'namespaces', 'ns',
+    'imagestream', 'imagestreams', 'is',
+    'buildconfig', 'buildconfigs', 'bc',
+    'build', 'builds'
+  ]).describe('Type of resource to patch (pod, deployment, service, route, configmap, secret, etc.)'),
+  name: z.string().describe('Name of the resource to patch'),
+  patch: z.string().describe('Patch content as JSON string or YAML. For strategic merge patch (default), provide the fields to update. For JSON patch, use RFC 6902 format.'),
+  patchType: z.enum(['strategic', 'merge', 'json']).optional().default('strategic').describe('Type of patch operation'),
+  namespace: NamespaceSchema.describe('Namespace/project for the resource (not required for cluster-scoped resources)'),
+  context: ContextSchema.describe('OpenShift context to use (optional)'),
+  dryRun: z.boolean().optional().default(false).describe('Perform a dry run without making actual changes'),
+  force: z.boolean().optional().default(false).describe('Force the patch operation, ignoring conflicts'),
+  fieldManager: z.string().optional().default('mcp-openshift-client').describe('Field manager name for server-side apply tracking'),
+  subresource: z.enum(['status', 'scale', 'spec']).optional().describe('Subresource to patch (e.g., status, scale)'),
+  recordHistory: z.boolean().optional().default(false).describe('Record the patch operation in the resource annotation for rollback purposes')
+});
+
 // Type exports
 export type OcGetParams = z.infer<typeof OcGetSchema>;
 export type OcCreateParams = z.infer<typeof OcCreateSchema>;
@@ -186,3 +228,4 @@ export type OcExposeParams = z.infer<typeof OcExposeSchema>;
 export type OcInstallOperatorParams = z.infer<typeof OcInstallOperatorSchema>;
 export type OcNewAppParams = z.infer<typeof OcNewAppSchema>;
 export type OcDescribeParams = z.infer<typeof OcDescribeSchema>;
+export type OcPatchParams = z.infer<typeof OcPatchSchema>;
