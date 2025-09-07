@@ -1,5 +1,21 @@
 # OpenShift MCP Server
 
+[![CI Pipeline](https://github.com/sanjaypsachdev/mcp-server-openshift/actions/workflows/ci.yml/badge.svg)](https://github.com/sanjaypsachdev/mcp-server-openshift/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/sanjaypsachdev/mcp-server-openshift/actions/workflows/codeql.yml/badge.svg)](https://github.com/sanjaypsachdev/mcp-server-openshift/actions/workflows/codeql.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.5.0-blue.svg)](https://www.typescriptlang.org/)
+[![OpenShift](https://img.shields.io/badge/OpenShift-4.x-red.svg)](https://www.redhat.com/en/technologies/cloud-computing/openshift)
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-1.25%2B-blue.svg)](https://kubernetes.io/)
+[![MCP](https://img.shields.io/badge/MCP-Model%20Context%20Protocol-purple.svg)](https://modelcontextprotocol.io/)
+[![Test Coverage](https://img.shields.io/badge/coverage-80%25-green.svg)](./coverage)
+[![Tests](https://img.shields.io/badge/tests-99%20passing-brightgreen.svg)](#testing)
+[![npm version](https://img.shields.io/npm/v/mcp-server-openshift.svg)](https://www.npmjs.com/package/mcp-server-openshift)
+[![npm downloads](https://img.shields.io/npm/dm/mcp-server-openshift.svg)](https://www.npmjs.com/package/mcp-server-openshift)
+[![Docker](https://img.shields.io/badge/docker-supported-blue.svg)](https://hub.docker.com/r/sanjaypsachdev/mcp-server-openshift)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
+[![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://github.com/sanjaypsachdev/mcp-server-openshift/graphs/commit-activity)
+
 A Model Context Protocol (MCP) server that provides AI assistants with comprehensive OpenShift/Kubernetes cluster management capabilities through the `oc` command-line interface.
 
 ## Demo Video
