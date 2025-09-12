@@ -49,6 +49,14 @@
         "description": "Securely log into an OpenShift cluster using username/password or token authentication"
       },
       {
+        "name": "oc_api_resources",
+        "description": "List all available API resources in the OpenShift cluster with their details"
+      },
+      {
+        "name": "oc_explain",
+        "description": "Explain OpenShift/Kubernetes resource schemas, fields, and API documentation"
+      },
+      {
         "name": "oc_rollout",
         "description": "Manage rollouts of OpenShift deploymentconfigs"
       },

@@ -92,6 +92,10 @@ npx -y mcp-remote http://localhost:3000/sse --transport sse-only
 ### Authentication & Access
 - **`oc_login`** - Securely log into OpenShift clusters using token or username/password authentication
 
+### API Discovery & Documentation
+- **`oc_api_resources`** - List all available API resources in the cluster with categorization
+- **`oc_explain`** - Explain resource schemas, fields, and API documentation
+
 ### Core Resource Management
 
 - **`oc_get`** - Get OpenShift resources (pods, deployments, services, routes, etc.)
@@ -147,6 +151,25 @@ oc_login with server: "https://api.cluster.example.com:6443",
          authMethod: "password", 
          username: "developer", 
          password: "your-password"
+```
+
+### Discover API Resources
+
+```bash
+# List all available API resources
+oc_api_resources
+
+# List resources for specific API group
+oc_api_resources with apiGroup: "apps"
+
+# List only namespaced resources
+oc_api_resources with namespaced: true
+
+# Explain a resource schema
+oc_explain with resource: "deployment"
+
+# Explain specific field
+oc_explain with resource: "pod", field: "spec.containers"
 ```
 
 ### Deploy Application

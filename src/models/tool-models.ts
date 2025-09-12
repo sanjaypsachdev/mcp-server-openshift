@@ -451,3 +451,24 @@ export const OcLoginSchema = z.object({
 });
 
 export type OcLoginParams = z.infer<typeof OcLoginSchema>;
+
+export const OcApiResourcesSchema = z.object({
+  context: ContextSchema.describe('OpenShift context to use (optional)'),
+  apiGroup: z.string().optional().describe('Filter by specific API group (e.g., apps, extensions, networking.k8s.io)'),
+  namespaced: z.boolean().optional().describe('Filter by namespaced resources only'),
+  verbs: z.array(z.string()).optional().describe('Filter by supported verbs (e.g., ["get", "list", "create", "delete"])'),
+  output: z.enum(['table', 'json', 'yaml', 'wide']).optional().default('table').describe('Output format for the API resources list'),
+  categories: z.boolean().optional().default(true).describe('Group resources by categories (core, apps, networking, etc.)')
+});
+
+export const OcExplainSchema = z.object({
+  resource: z.string().describe('Resource type to explain (e.g., pod, deployment, service, route.route.openshift.io)'),
+  field: z.string().optional().describe('Specific field path to explain (e.g., spec.containers, metadata.labels)'),
+  context: ContextSchema.describe('OpenShift context to use (optional)'),
+  apiVersion: z.string().optional().describe('Specific API version to explain (e.g., apps/v1, route.openshift.io/v1)'),
+  recursive: z.boolean().optional().default(false).describe('Show all fields recursively'),
+  output: z.enum(['plaintext', 'json']).optional().default('plaintext').describe('Output format for the explanation')
+});
+
+export type OcApiResourcesParams = z.infer<typeof OcApiResourcesSchema>;
+export type OcExplainParams = z.infer<typeof OcExplainSchema>;
