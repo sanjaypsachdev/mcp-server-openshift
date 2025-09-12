@@ -45,6 +45,10 @@
         "description": "Patch OpenShift resources with strategic merge, JSON merge, or JSON patch operations"
       },
       {
+        "name": "oc_login",
+        "description": "Securely log into an OpenShift cluster using username/password or token authentication"
+      },
+      {
         "name": "oc_rollout",
         "description": "Manage rollouts of OpenShift deploymentconfigs"
       },

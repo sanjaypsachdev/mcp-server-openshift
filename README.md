@@ -89,6 +89,9 @@ npx -y mcp-remote http://localhost:3000/sse --transport sse-only
 
 ## Tools
 
+### Authentication & Access
+- **`oc_login`** - Securely log into OpenShift clusters using token or username/password authentication
+
 ### Core Resource Management
 
 - **`oc_get`** - Get OpenShift resources (pods, deployments, services, routes, etc.)
@@ -130,6 +133,21 @@ Intelligent log analysis and pattern detection:
 - **Pod Logs Sampling** - Automatic log sampling with error pattern detection and context analysis
 
 ## Usage Examples
+
+### Login to Cluster
+
+```bash
+# Login with token (recommended)
+oc_login with server: "https://api.cluster.example.com:6443", 
+         authMethod: "token", 
+         token: "sha256~your-token-here"
+
+# Login with username/password
+oc_login with server: "https://api.cluster.example.com:6443", 
+         authMethod: "password", 
+         username: "developer", 
+         password: "your-password"
+```
 
 ### Deploy Application
 
@@ -212,10 +230,26 @@ src/
 
 ## Security
 
-- Respects OpenShift RBAC permissions
-- No credential storage or transmission
-- Executes with user's existing permissions
-- Comprehensive input validation
+### Authentication Security
+- **Token Authentication**: Preferred method for automation and production use
+- **Password Authentication**: Available but token authentication is recommended
+- **HTTPS Enforcement**: All cluster connections must use HTTPS
+- **URL Validation**: Server URLs validated to prevent SSRF attacks
+- **Private IP Blocking**: Prevents connections to internal/metadata services
+
+### Operational Security
+- **RBAC Compliance**: Respects OpenShift RBAC permissions
+- **No Credential Storage**: Credentials are not stored or transmitted by the server
+- **User Permissions**: Executes with the same permissions as the authenticated user
+- **Input Validation**: Comprehensive validation of all inputs and parameters
+- **Secure Defaults**: Conservative security settings by default
+
+### Best Practices
+- **Use Service Account Tokens**: For automation and CI/CD pipelines
+- **Regular Token Rotation**: Rotate authentication tokens regularly
+- **TLS Certificate Validation**: Always validate TLS certificates in production
+- **Least Privilege**: Use accounts with minimal required permissions
+- **Session Management**: Use `oc logout` to clear credentials when done
 
 ## License
 
