@@ -123,7 +123,7 @@ MCP Resources provide read-only access to cluster information:
 
 Interactive troubleshooting and operational guidance:
 
-- **`troubleshoot-pod-prompt`** - Comprehensive pod troubleshooting guide
+- **`troubleshoot-openshift-prompt`** - Comprehensive OpenShift troubleshooting guide for all resource types and cluster issues
 - **`monitoring-prompts`** - Monitoring and observability guidance for different scenarios
 
 ## Sampling
@@ -171,12 +171,20 @@ oc_patch with resourceType: "deployment", name: "my-app",
          patch: '{"metadata":{"labels":{"environment":"production"}}}'
 ```
 
-### Troubleshoot Pod
+### Troubleshoot Issues
 
 ```bash
-# Get troubleshooting guidance
-Use prompt: troubleshoot-pod-prompt
-Arguments: podName: "my-app-12345", namespace: "my-project"
+# Get pod troubleshooting guidance
+Use prompt: troubleshoot-openshift-prompt
+Arguments: issueType: "pod", resourceName: "my-app-12345", namespace: "my-project"
+
+# Get deployment troubleshooting guidance
+Use prompt: troubleshoot-openshift-prompt
+Arguments: issueType: "deployment", resourceName: "my-app", namespace: "my-project"
+
+# Get general cluster troubleshooting guidance
+Use prompt: troubleshoot-openshift-prompt
+Arguments: issueType: "cluster", symptoms: "nodes not ready"
 ```
 
 ## Development

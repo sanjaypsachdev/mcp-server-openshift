@@ -63,8 +63,8 @@
     ],
     "prompts": [
       {
-        "name": "troubleshoot-pod-prompt",
-        "description": "Comprehensive pod troubleshooting guide for OpenShift clusters"
+        "name": "troubleshoot-openshift-prompt",
+        "description": "Comprehensive OpenShift troubleshooting guide covering pods, deployments, services, routes, builds, and cluster-wide issues"
       },
       {
         "name": "monitoring-prompts",

@@ -34,9 +34,9 @@ import { appTemplatesResource, getAppTemplates } from './resources/app-templates
 
 // Import prompts
 import {
-  troubleshootPodPrompt,
-  generateTroubleshootPodPrompt,
-} from './prompts/troubleshoot-pod.js';
+  troubleshootOpenshiftPrompt,
+  generateTroubleshootOpenshiftPrompt,
+} from './prompts/troubleshoot-openshift.js';
 import {
   monitoringPromptsPrompt,
   generateMonitoringPrompts,
@@ -229,7 +229,7 @@ class OpenShiftMCPServer {
     this.server.setRequestHandler(ListPromptsRequestSchema, async () => {
       return {
         prompts: [
-          troubleshootPodPrompt,
+          troubleshootOpenshiftPrompt,
           monitoringPromptsPrompt,
           // Add more prompts here as they are implemented
         ],
@@ -242,15 +242,16 @@ class OpenShiftMCPServer {
 
       try {
         switch (name) {
-          case 'troubleshoot-pod-prompt':
-            const troubleshootPromptText = generateTroubleshootPodPrompt({
-              podName: args?.podName || 'UNKNOWN_POD',
-              namespace: args?.namespace || 'UNKNOWN_NAMESPACE',
+          case 'troubleshoot-openshift-prompt':
+            const troubleshootPromptText = generateTroubleshootOpenshiftPrompt({
+              issueType: args?.issueType || 'general',
+              resourceName: args?.resourceName,
+              namespace: args?.namespace,
               symptoms: args?.symptoms,
-              containerName: args?.containerName,
+              context: args?.context,
             });
             return {
-              description: `Pod troubleshooting guide for ${args?.podName || 'pod'} in ${args?.namespace || 'namespace'}`,
+              description: `OpenShift troubleshooting guide for ${args?.issueType || 'general'} issues${args?.resourceName ? ` with ${args.resourceName}` : ''}${args?.namespace ? ` in ${args.namespace}` : ''}`,
               messages: [
                 {
                   role: 'user' as const,

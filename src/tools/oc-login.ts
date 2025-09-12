@@ -120,7 +120,7 @@ export async function handleOcLogin(args: OcLoginArgs) {
         content: [
           {
             type: 'text' as const,
-            text: formatLoginError(args, result.error),
+            text: formatLoginError(args, result.error || 'Unknown error'),
           },
         ],
         isError: true,
