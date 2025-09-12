@@ -438,36 +438,94 @@ export type OcDescribeParams = z.infer<typeof OcDescribeSchema>;
 export type OcPatchParams = z.infer<typeof OcPatchSchema>;
 
 export const OcLoginSchema = z.object({
-  server: z.string().url().describe('OpenShift cluster server URL (e.g., https://api.cluster.example.com:6443)'),
-  authMethod: z.enum(['token', 'password']).default('token').describe('Authentication method to use'),
-  token: z.string().optional().describe('OpenShift authentication token (required if authMethod is token)'),
-  username: z.string().optional().describe('Username for password authentication (required if authMethod is password)'),
-  password: z.string().optional().describe('Password for password authentication (required if authMethod is password)'),
-  context: z.string().optional().default('').describe('Context name to save the login session (optional)'),
-  insecureSkipTlsVerify: z.boolean().optional().default(false).describe('Skip TLS certificate verification (not recommended for production)'),
-  certificateAuthority: z.string().optional().describe('Path to certificate authority file for TLS verification'),
-  namespace: z.string().optional().default('default').describe('Default namespace to set after login'),
-  timeout: z.number().min(5).max(300).optional().default(30).describe('Login timeout in seconds')
+  server: z
+    .string()
+    .url()
+    .describe('OpenShift cluster server URL (e.g., https://api.cluster.example.com:6443)'),
+  authMethod: z
+    .enum(['token', 'password'])
+    .default('token')
+    .describe('Authentication method to use'),
+  token: z
+    .string()
+    .optional()
+    .describe('OpenShift authentication token (required if authMethod is token)'),
+  username: z
+    .string()
+    .optional()
+    .describe('Username for password authentication (required if authMethod is password)'),
+  password: z
+    .string()
+    .optional()
+    .describe('Password for password authentication (required if authMethod is password)'),
+  context: z
+    .string()
+    .optional()
+    .default('')
+    .describe('Context name to save the login session (optional)'),
+  insecureSkipTlsVerify: z
+    .boolean()
+    .optional()
+    .default(false)
+    .describe('Skip TLS certificate verification (not recommended for production)'),
+  certificateAuthority: z
+    .string()
+    .optional()
+    .describe('Path to certificate authority file for TLS verification'),
+  namespace: z
+    .string()
+    .optional()
+    .default('default')
+    .describe('Default namespace to set after login'),
+  timeout: z.number().min(5).max(300).optional().default(30).describe('Login timeout in seconds'),
 });
 
 export type OcLoginParams = z.infer<typeof OcLoginSchema>;
 
 export const OcApiResourcesSchema = z.object({
   context: ContextSchema.describe('OpenShift context to use (optional)'),
-  apiGroup: z.string().optional().describe('Filter by specific API group (e.g., apps, extensions, networking.k8s.io)'),
+  apiGroup: z
+    .string()
+    .optional()
+    .describe('Filter by specific API group (e.g., apps, extensions, networking.k8s.io)'),
   namespaced: z.boolean().optional().describe('Filter by namespaced resources only'),
-  verbs: z.array(z.string()).optional().describe('Filter by supported verbs (e.g., ["get", "list", "create", "delete"])'),
-  output: z.enum(['table', 'json', 'yaml', 'wide']).optional().default('table').describe('Output format for the API resources list'),
-  categories: z.boolean().optional().default(true).describe('Group resources by categories (core, apps, networking, etc.)')
+  verbs: z
+    .array(z.string())
+    .optional()
+    .describe('Filter by supported verbs (e.g., ["get", "list", "create", "delete"])'),
+  output: z
+    .enum(['table', 'json', 'yaml', 'wide'])
+    .optional()
+    .default('table')
+    .describe('Output format for the API resources list'),
+  categories: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe('Group resources by categories (core, apps, networking, etc.)'),
 });
 
 export const OcExplainSchema = z.object({
-  resource: z.string().describe('Resource type to explain (e.g., pod, deployment, service, route.route.openshift.io)'),
-  field: z.string().optional().describe('Specific field path to explain (e.g., spec.containers, metadata.labels)'),
+  resource: z
+    .string()
+    .describe(
+      'Resource type to explain (e.g., pod, deployment, service, route.route.openshift.io)'
+    ),
+  field: z
+    .string()
+    .optional()
+    .describe('Specific field path to explain (e.g., spec.containers, metadata.labels)'),
   context: ContextSchema.describe('OpenShift context to use (optional)'),
-  apiVersion: z.string().optional().describe('Specific API version to explain (e.g., apps/v1, route.openshift.io/v1)'),
+  apiVersion: z
+    .string()
+    .optional()
+    .describe('Specific API version to explain (e.g., apps/v1, route.openshift.io/v1)'),
   recursive: z.boolean().optional().default(false).describe('Show all fields recursively'),
-  output: z.enum(['plaintext', 'json']).optional().default('plaintext').describe('Output format for the explanation')
+  output: z
+    .enum(['plaintext', 'json'])
+    .optional()
+    .default('plaintext')
+    .describe('Output format for the explanation'),
 });
 
 export type OcApiResourcesParams = z.infer<typeof OcApiResourcesSchema>;

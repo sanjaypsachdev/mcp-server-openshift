@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { handleOcApiResources, ocApiResourcesTool, type OcApiResourcesArgs } from '../src/tools/oc-api-resources.js';
+import {
+  handleOcApiResources,
+  ocApiResourcesTool,
+  type OcApiResourcesArgs,
+} from '../src/tools/oc-api-resources.js';
 import { OpenShiftManager } from '../src/utils/openshift-manager.js';
 
 // Mock the OpenShiftManager
@@ -18,7 +22,9 @@ describe('oc-api-resources tool', () => {
   describe('tool definition', () => {
     it('should have correct tool definition', () => {
       expect(ocApiResourcesTool.name).toBe('oc_api_resources');
-      expect(ocApiResourcesTool.description).toBe('List all available API resources in the OpenShift cluster with their details');
+      expect(ocApiResourcesTool.description).toBe(
+        'List all available API resources in the OpenShift cluster with their details'
+      );
       expect(ocApiResourcesTool.inputSchema.type).toBe('object');
       expect(ocApiResourcesTool.inputSchema.required).toBeUndefined();
     });
@@ -53,7 +59,7 @@ routes                                         route.openshift.io/v1            
 
         mockManager.executeCommand.mockResolvedValue({
           success: true,
-          data: mockTableOutput
+          data: mockTableOutput,
         });
 
         const result = await handleOcApiResources(args);
@@ -64,18 +70,18 @@ routes                                         route.openshift.io/v1            
         expect(result.content[0].text).toContain('**Output Format**: table');
         expect(mockManager.executeCommand).toHaveBeenCalledWith(['api-resources'], {
           context: undefined,
-          timeout: 30000
+          timeout: 30000,
         });
       });
 
       it('should handle API group filtering', async () => {
         const args: OcApiResourcesArgs = {
-          apiGroup: 'apps'
+          apiGroup: 'apps',
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: true,
-          data: mockTableOutput
+          data: mockTableOutput,
         });
 
         await handleOcApiResources(args);
@@ -88,12 +94,12 @@ routes                                         route.openshift.io/v1            
 
       it('should handle namespaced filtering', async () => {
         const args: OcApiResourcesArgs = {
-          namespaced: true
+          namespaced: true,
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: true,
-          data: mockTableOutput
+          data: mockTableOutput,
         });
 
         await handleOcApiResources(args);
@@ -106,12 +112,12 @@ routes                                         route.openshift.io/v1            
 
       it('should handle verbs filtering', async () => {
         const args: OcApiResourcesArgs = {
-          verbs: ['get', 'list', 'create']
+          verbs: ['get', 'list', 'create'],
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: true,
-          data: mockTableOutput
+          data: mockTableOutput,
         });
 
         await handleOcApiResources(args);
@@ -124,12 +130,12 @@ routes                                         route.openshift.io/v1            
 
       it('should handle different output formats', async () => {
         const args: OcApiResourcesArgs = {
-          output: 'json'
+          output: 'json',
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: true,
-          data: '{"resources": []}'
+          data: '{"resources": []}',
         });
 
         await handleOcApiResources(args);
@@ -144,12 +150,12 @@ routes                                         route.openshift.io/v1            
     describe('output formatting', () => {
       it('should format table output with categories', async () => {
         const args: OcApiResourcesArgs = {
-          categories: true
+          categories: true,
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: true,
-          data: mockTableOutput
+          data: mockTableOutput,
         });
 
         const result = await handleOcApiResources(args);
@@ -162,13 +168,13 @@ routes                                         route.openshift.io/v1            
 
       it('should format JSON output correctly', async () => {
         const args: OcApiResourcesArgs = {
-          output: 'json'
+          output: 'json',
         };
 
         const jsonOutput = '{"resources": [{"name": "pods", "kind": "Pod"}]}';
         mockManager.executeCommand.mockResolvedValue({
           success: true,
-          data: jsonOutput
+          data: jsonOutput,
         });
 
         const result = await handleOcApiResources(args);
@@ -183,7 +189,7 @@ routes                                         route.openshift.io/v1            
 
         mockManager.executeCommand.mockResolvedValue({
           success: true,
-          data: mockTableOutput
+          data: mockTableOutput,
         });
 
         const result = await handleOcApiResources(args);
@@ -201,7 +207,7 @@ routes                                         route.openshift.io/v1            
 
         mockManager.executeCommand.mockResolvedValue({
           success: false,
-          error: 'error: You must be logged in to the server'
+          error: 'error: You must be logged in to the server',
         });
 
         const result = await handleOcApiResources(args);
@@ -228,20 +234,20 @@ routes                                         route.openshift.io/v1            
     describe('context handling', () => {
       it('should pass context to command execution', async () => {
         const args: OcApiResourcesArgs = {
-          context: 'test-cluster'
+          context: 'test-cluster',
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: true,
-          data: mockTableOutput
+          data: mockTableOutput,
         });
 
         await handleOcApiResources(args);
 
-        expect(mockManager.executeCommand).toHaveBeenCalledWith(
-          expect.any(Array),
-          { context: 'test-cluster', timeout: 30000 }
-        );
+        expect(mockManager.executeCommand).toHaveBeenCalledWith(expect.any(Array), {
+          context: 'test-cluster',
+          timeout: 30000,
+        });
       });
     });
   });

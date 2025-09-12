@@ -2,11 +2,13 @@ import { Prompt } from '@modelcontextprotocol/sdk/types.js';
 
 export const troubleshootOpenshiftPrompt: Prompt = {
   name: 'troubleshoot-openshift-prompt',
-  description: 'Comprehensive OpenShift troubleshooting guide covering pods, deployments, services, routes, builds, and cluster-wide issues',
+  description:
+    'Comprehensive OpenShift troubleshooting guide covering pods, deployments, services, routes, builds, and cluster-wide issues',
   arguments: [
     {
       name: 'issueType',
-      description: 'Type of issue to troubleshoot (pod, deployment, service, route, build, networking, storage, cluster, performance)',
+      description:
+        'Type of issue to troubleshoot (pod, deployment, service, route, build, networking, storage, cluster, performance)',
       required: true,
     },
     {
@@ -208,8 +210,8 @@ function generateIssueSpecificGuide(
   issueType: string,
   resourceName?: string,
   namespace?: string,
-  symptoms?: string,
-  context?: string
+  _symptoms?: string,
+  _context?: string
 ): string {
   const ns = namespace || '<namespace>';
   const resource = resourceName || '<resource-name>';

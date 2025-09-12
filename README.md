@@ -90,9 +90,11 @@ npx -y mcp-remote http://localhost:3000/sse --transport sse-only
 ## Tools
 
 ### Authentication & Access
+
 - **`oc_login`** - Securely log into OpenShift clusters using token or username/password authentication
 
 ### API Discovery & Documentation
+
 - **`oc_api_resources`** - List all available API resources in the cluster with categorization
 - **`oc_explain`** - Explain resource schemas, fields, and API documentation
 
@@ -142,14 +144,14 @@ Intelligent log analysis and pattern detection:
 
 ```bash
 # Login with token (recommended)
-oc_login with server: "https://api.cluster.example.com:6443", 
-         authMethod: "token", 
+oc_login with server: "https://api.cluster.example.com:6443",
+         authMethod: "token",
          token: "sha256~your-token-here"
 
 # Login with username/password
-oc_login with server: "https://api.cluster.example.com:6443", 
-         authMethod: "password", 
-         username: "developer", 
+oc_login with server: "https://api.cluster.example.com:6443",
+         authMethod: "password",
+         username: "developer",
          password: "your-password"
 ```
 
@@ -262,6 +264,7 @@ src/
 ## Security
 
 ### Authentication Security
+
 - **Token Authentication**: Preferred method for automation and production use
 - **Password Authentication**: Available but token authentication is recommended
 - **HTTPS Enforcement**: All cluster connections must use HTTPS
@@ -269,6 +272,7 @@ src/
 - **Private IP Blocking**: Prevents connections to internal/metadata services
 
 ### Operational Security
+
 - **RBAC Compliance**: Respects OpenShift RBAC permissions
 - **No Credential Storage**: Credentials are not stored or transmitted by the server
 - **User Permissions**: Executes with the same permissions as the authenticated user
@@ -276,6 +280,7 @@ src/
 - **Secure Defaults**: Conservative security settings by default
 
 ### Best Practices
+
 - **Use Service Account Tokens**: For automation and CI/CD pipelines
 - **Regular Token Rotation**: Rotate authentication tokens regularly
 - **TLS Certificate Validation**: Always validate TLS certificates in production

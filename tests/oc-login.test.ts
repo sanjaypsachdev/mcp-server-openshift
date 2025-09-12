@@ -18,7 +18,9 @@ describe('oc-login tool', () => {
   describe('tool definition', () => {
     it('should have correct tool definition', () => {
       expect(ocLoginTool.name).toBe('oc_login');
-      expect(ocLoginTool.description).toBe('Securely log into an OpenShift cluster using username/password or token authentication');
+      expect(ocLoginTool.description).toBe(
+        'Securely log into an OpenShift cluster using username/password or token authentication'
+      );
       expect(ocLoginTool.inputSchema.type).toBe('object');
       expect(ocLoginTool.inputSchema.required).toEqual(['server', 'authMethod']);
     });
@@ -54,7 +56,7 @@ describe('oc-login tool', () => {
       it('should reject missing required fields', async () => {
         const args: OcLoginArgs = {
           server: '',
-          authMethod: 'token'
+          authMethod: 'token',
         };
 
         const result = await handleOcLogin(args);
@@ -66,7 +68,7 @@ describe('oc-login tool', () => {
       it('should reject invalid auth method', async () => {
         const args: OcLoginArgs = {
           server: 'https://api.cluster.example.com:6443',
-          authMethod: 'invalid' as any
+          authMethod: 'invalid' as any,
         };
 
         const result = await handleOcLogin(args);
@@ -78,7 +80,7 @@ describe('oc-login tool', () => {
       it('should reject token auth without token', async () => {
         const args: OcLoginArgs = {
           server: 'https://api.cluster.example.com:6443',
-          authMethod: 'token'
+          authMethod: 'token',
         };
 
         const result = await handleOcLogin(args);
@@ -91,26 +93,30 @@ describe('oc-login tool', () => {
         const args: OcLoginArgs = {
           server: 'https://api.cluster.example.com:6443',
           authMethod: 'password',
-          password: 'test-password'
+          password: 'test-password',
         };
 
         const result = await handleOcLogin(args);
 
         expect(result.isError).toBe(true);
-        expect(result.content[0].text).toContain('Username is required when authMethod is "password"');
+        expect(result.content[0].text).toContain(
+          'Username is required when authMethod is "password"'
+        );
       });
 
       it('should reject password auth without password', async () => {
         const args: OcLoginArgs = {
           server: 'https://api.cluster.example.com:6443',
           authMethod: 'password',
-          username: 'test-user'
+          username: 'test-user',
         };
 
         const result = await handleOcLogin(args);
 
         expect(result.isError).toBe(true);
-        expect(result.content[0].text).toContain('Password is required when authMethod is "password"');
+        expect(result.content[0].text).toContain(
+          'Password is required when authMethod is "password"'
+        );
       });
 
       it('should reject invalid timeout values', async () => {
@@ -118,7 +124,7 @@ describe('oc-login tool', () => {
           server: 'https://api.cluster.example.com:6443',
           authMethod: 'token',
           token: 'valid-token',
-          timeout: 400
+          timeout: 400,
         };
 
         const result = await handleOcLogin(args);
@@ -131,7 +137,7 @@ describe('oc-login tool', () => {
         const args: OcLoginArgs = {
           server: 'https://api.cluster.example.com:6443',
           authMethod: 'token',
-          token: 'short'
+          token: 'short',
         };
 
         const result = await handleOcLogin(args);
@@ -146,7 +152,7 @@ describe('oc-login tool', () => {
         const args: OcLoginArgs = {
           server: 'http://api.cluster.example.com:6443',
           authMethod: 'token',
-          token: 'valid-token-12345'
+          token: 'valid-token-12345',
         };
 
         const result = await handleOcLogin(args);
@@ -160,7 +166,7 @@ describe('oc-login tool', () => {
         const args: OcLoginArgs = {
           server: 'https://localhost:6443',
           authMethod: 'token',
-          token: 'valid-token-12345'
+          token: 'valid-token-12345',
         };
 
         const result = await handleOcLogin(args);
@@ -173,7 +179,7 @@ describe('oc-login tool', () => {
         const args: OcLoginArgs = {
           server: 'https://192.168.1.100:6443',
           authMethod: 'token',
-          token: 'valid-token-12345'
+          token: 'valid-token-12345',
         };
 
         const result = await handleOcLogin(args);
@@ -187,27 +193,27 @@ describe('oc-login tool', () => {
           'https://api.cluster.example.com:6443',
           'https://api.openshift.example.com:6443',
           'https://cluster.k8s.example.com:6443',
-          'https://openshift.company.com:6443'
+          'https://openshift.company.com:6443',
         ];
 
         for (const server of validUrls) {
           const args: OcLoginArgs = {
             server,
             authMethod: 'token',
-            token: 'valid-token-12345'
+            token: 'valid-token-12345',
           };
 
           mockManager.executeCommand.mockResolvedValueOnce({
             success: true,
-            data: 'Login successful'
+            data: 'Login successful',
           });
           mockManager.executeCommand.mockResolvedValueOnce({
             success: true,
-            data: 'test-user'
+            data: 'test-user',
           });
           mockManager.executeCommand.mockResolvedValueOnce({
             success: true,
-            data: 'test-cluster'
+            data: 'test-cluster',
           });
 
           const result = await handleOcLogin(args);
@@ -223,38 +229,49 @@ describe('oc-login tool', () => {
           authMethod: 'token',
           token: 'sha256~valid-token-12345',
           context: 'test-cluster',
-          namespace: 'my-project'
+          namespace: 'my-project',
         };
 
         mockManager.executeCommand
           .mockResolvedValueOnce({
             success: true,
-            data: 'Login successful. Using project "my-project".'
+            data: 'Login successful. Using project "my-project".',
           })
           .mockResolvedValueOnce({
             success: true,
-            data: 'Set namespace to my-project'
+            data: 'Set namespace to my-project',
           })
           .mockResolvedValueOnce({
             success: true,
-            data: 'system:serviceaccount:my-project:my-sa'
+            data: 'system:serviceaccount:my-project:my-sa',
           })
           .mockResolvedValueOnce({
             success: true,
-            data: 'test-cluster'
+            data: 'test-cluster',
           });
 
         const result = await handleOcLogin(args);
 
         expect(result.isError).toBeFalsy();
         expect(result.content[0].text).toContain('OpenShift Login Successful');
-        expect(result.content[0].text).toContain('**Server**: https://api.cluster.example.com:6443');
+        expect(result.content[0].text).toContain(
+          '**Server**: https://api.cluster.example.com:6443'
+        );
         expect(result.content[0].text).toContain('**Auth Method**: token');
         expect(result.content[0].text).toContain('**Context**: test-cluster');
-        expect(result.content[0].text).toContain('**User**: system:serviceaccount:my-project:my-sa');
-        
+        expect(result.content[0].text).toContain(
+          '**User**: system:serviceaccount:my-project:my-sa'
+        );
+
         expect(mockManager.executeCommand).toHaveBeenCalledWith(
-          ['login', 'https://api.cluster.example.com:6443', '--token', 'sha256~valid-token-12345', '--context', 'test-cluster'],
+          [
+            'login',
+            'https://api.cluster.example.com:6443',
+            '--token',
+            'sha256~valid-token-12345',
+            '--context',
+            'test-cluster',
+          ],
           { timeout: 30000 }
         );
       });
@@ -263,21 +280,21 @@ describe('oc-login tool', () => {
         const args: OcLoginArgs = {
           server: 'https://api.cluster.example.com:6443',
           authMethod: 'token',
-          token: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjU5...' // JWT token format
+          token: 'eyJhbGciOiJSUzI1NiIsImtpZCI6IjU5...', // JWT token format
         };
 
         mockManager.executeCommand
           .mockResolvedValueOnce({
             success: true,
-            data: 'Login successful'
+            data: 'Login successful',
           })
           .mockResolvedValueOnce({
             success: true,
-            data: 'system:serviceaccount:default:default'
+            data: 'system:serviceaccount:default:default',
           })
           .mockResolvedValueOnce({
             success: true,
-            data: 'api-cluster-example-com:6443'
+            data: 'api-cluster-example-com:6443',
           });
 
         const result = await handleOcLogin(args);
@@ -294,25 +311,25 @@ describe('oc-login tool', () => {
           authMethod: 'password',
           username: 'developer',
           password: 'secure-password',
-          namespace: 'development'
+          namespace: 'development',
         };
 
         mockManager.executeCommand
           .mockResolvedValueOnce({
             success: true,
-            data: 'Login successful. Using project "development".'
+            data: 'Login successful. Using project "development".',
           })
           .mockResolvedValueOnce({
             success: true,
-            data: 'Set namespace to development'
+            data: 'Set namespace to development',
           })
           .mockResolvedValueOnce({
             success: true,
-            data: 'developer'
+            data: 'developer',
           })
           .mockResolvedValueOnce({
             success: true,
-            data: 'api-cluster-example-com:6443/developer'
+            data: 'api-cluster-example-com:6443/developer',
           });
 
         const result = await handleOcLogin(args);
@@ -321,9 +338,16 @@ describe('oc-login tool', () => {
         expect(result.content[0].text).toContain('OpenShift Login Successful');
         expect(result.content[0].text).toContain('**Auth Method**: password');
         expect(result.content[0].text).toContain('**User**: developer');
-        
+
         expect(mockManager.executeCommand).toHaveBeenCalledWith(
-          ['login', 'https://api.cluster.example.com:6443', '--username', 'developer', '--password', 'secure-password'],
+          [
+            'login',
+            'https://api.cluster.example.com:6443',
+            '--username',
+            'developer',
+            '--password',
+            'secure-password',
+          ],
           { timeout: 30000 }
         );
       });
@@ -335,21 +359,21 @@ describe('oc-login tool', () => {
           server: 'https://api.cluster.example.com:6443',
           authMethod: 'token',
           token: 'valid-token-12345',
-          insecureSkipTlsVerify: true
+          insecureSkipTlsVerify: true,
         };
 
         mockManager.executeCommand
           .mockResolvedValueOnce({
             success: true,
-            data: 'Login successful'
+            data: 'Login successful',
           })
           .mockResolvedValueOnce({
             success: true,
-            data: 'test-user'
+            data: 'test-user',
           })
           .mockResolvedValueOnce({
             success: true,
-            data: 'test-context'
+            data: 'test-context',
           });
 
         await handleOcLogin(args);
@@ -365,21 +389,21 @@ describe('oc-login tool', () => {
           server: 'https://api.cluster.example.com:6443',
           authMethod: 'token',
           token: 'valid-token-12345',
-          certificateAuthority: '/path/to/ca.crt'
+          certificateAuthority: '/path/to/ca.crt',
         };
 
         mockManager.executeCommand
           .mockResolvedValueOnce({
             success: true,
-            data: 'Login successful'
+            data: 'Login successful',
           })
           .mockResolvedValueOnce({
             success: true,
-            data: 'test-user'
+            data: 'test-user',
           })
           .mockResolvedValueOnce({
             success: true,
-            data: 'test-context'
+            data: 'test-context',
           });
 
         await handleOcLogin(args);
@@ -395,29 +419,28 @@ describe('oc-login tool', () => {
           server: 'https://api.cluster.example.com:6443',
           authMethod: 'token',
           token: 'valid-token-12345',
-          timeout: 60
+          timeout: 60,
         };
 
         mockManager.executeCommand
           .mockResolvedValueOnce({
             success: true,
-            data: 'Login successful'
+            data: 'Login successful',
           })
           .mockResolvedValueOnce({
             success: true,
-            data: 'test-user'
+            data: 'test-user',
           })
           .mockResolvedValueOnce({
             success: true,
-            data: 'test-context'
+            data: 'test-context',
           });
 
         await handleOcLogin(args);
 
-        expect(mockManager.executeCommand).toHaveBeenCalledWith(
-          expect.any(Array),
-          { timeout: 60000 }
-        );
+        expect(mockManager.executeCommand).toHaveBeenCalledWith(expect.any(Array), {
+          timeout: 60000,
+        });
       });
     });
 
@@ -426,12 +449,12 @@ describe('oc-login tool', () => {
         const args: OcLoginArgs = {
           server: 'https://api.cluster.example.com:6443',
           authMethod: 'token',
-          token: 'invalid-token'
+          token: 'invalid-token',
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: false,
-          error: 'error: couldn\'t get current server API group list: Unauthorized'
+          error: "error: couldn't get current server API group list: Unauthorized",
         });
 
         const result = await handleOcLogin(args);
@@ -446,12 +469,12 @@ describe('oc-login tool', () => {
         const args: OcLoginArgs = {
           server: 'https://api.cluster.example.com:6443',
           authMethod: 'token',
-          token: 'valid-token-12345'
+          token: 'valid-token-12345',
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: false,
-          error: 'error: x509: certificate signed by unknown authority'
+          error: 'error: x509: certificate signed by unknown authority',
         });
 
         const result = await handleOcLogin(args);
@@ -466,12 +489,12 @@ describe('oc-login tool', () => {
         const args: OcLoginArgs = {
           server: 'https://api.unreachable.example.com:6443',
           authMethod: 'token',
-          token: 'valid-token-12345'
+          token: 'valid-token-12345',
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: false,
-          error: 'error: dial tcp: i/o timeout'
+          error: 'error: dial tcp: i/o timeout',
         });
 
         const result = await handleOcLogin(args);
@@ -485,12 +508,12 @@ describe('oc-login tool', () => {
         const args: OcLoginArgs = {
           server: 'https://api.cluster.example.com:6443',
           authMethod: 'token',
-          token: 'valid-token-12345'
+          token: 'valid-token-12345',
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: false,
-          error: 'error: dial tcp: connection refused'
+          error: 'error: dial tcp: connection refused',
         });
 
         const result = await handleOcLogin(args);
@@ -504,7 +527,7 @@ describe('oc-login tool', () => {
         const args: OcLoginArgs = {
           server: 'https://api.cluster.example.com:6443',
           authMethod: 'token',
-          token: 'valid-token-12345'
+          token: 'valid-token-12345',
         };
 
         mockManager.executeCommand.mockRejectedValue(new Error('Network error'));
@@ -523,25 +546,25 @@ describe('oc-login tool', () => {
           server: 'https://api.cluster.example.com:6443',
           authMethod: 'token',
           token: 'valid-token-12345',
-          namespace: 'custom-namespace'
+          namespace: 'custom-namespace',
         };
 
         mockManager.executeCommand
           .mockResolvedValueOnce({
             success: true,
-            data: 'Login successful'
+            data: 'Login successful',
           })
           .mockResolvedValueOnce({
             success: true,
-            data: 'Set namespace to custom-namespace'
+            data: 'Set namespace to custom-namespace',
           })
           .mockResolvedValueOnce({
             success: true,
-            data: 'test-user'
+            data: 'test-user',
           })
           .mockResolvedValueOnce({
             success: true,
-            data: 'test-context'
+            data: 'test-context',
           });
 
         const result = await handleOcLogin(args);
@@ -558,21 +581,21 @@ describe('oc-login tool', () => {
           server: 'https://api.cluster.example.com:6443',
           authMethod: 'token',
           token: 'valid-token-12345',
-          namespace: 'default'
+          namespace: 'default',
         };
 
         mockManager.executeCommand
           .mockResolvedValueOnce({
             success: true,
-            data: 'Login successful'
+            data: 'Login successful',
           })
           .mockResolvedValueOnce({
             success: true,
-            data: 'test-user'
+            data: 'test-user',
           })
           .mockResolvedValueOnce({
             success: true,
-            data: 'test-context'
+            data: 'test-context',
           });
 
         await handleOcLogin(args);
@@ -589,25 +612,25 @@ describe('oc-login tool', () => {
           server: 'https://api.cluster.example.com:6443',
           authMethod: 'token',
           token: 'valid-token-12345',
-          namespace: 'nonexistent-namespace'
+          namespace: 'nonexistent-namespace',
         };
 
         mockManager.executeCommand
           .mockResolvedValueOnce({
             success: true,
-            data: 'Login successful'
+            data: 'Login successful',
           })
           .mockResolvedValueOnce({
             success: false,
-            error: 'namespace "nonexistent-namespace" not found'
+            error: 'namespace "nonexistent-namespace" not found',
           })
           .mockResolvedValueOnce({
             success: true,
-            data: 'test-user'
+            data: 'test-user',
           })
           .mockResolvedValueOnce({
             success: true,
-            data: 'test-context'
+            data: 'test-context',
           });
 
         // Mock console.warn to avoid actual console output
@@ -618,7 +641,9 @@ describe('oc-login tool', () => {
         expect(result.isError).toBeFalsy(); // Login should still succeed
         expect(result.content[0].text).toContain('OpenShift Login Successful');
         expect(consoleSpy).toHaveBeenCalledWith(
-          expect.stringContaining('Warning: Failed to set default namespace to nonexistent-namespace')
+          expect.stringContaining(
+            'Warning: Failed to set default namespace to nonexistent-namespace'
+          )
         );
 
         consoleSpy.mockRestore();
@@ -632,31 +657,33 @@ describe('oc-login tool', () => {
           authMethod: 'token',
           token: 'valid-token-12345',
           context: 'production-cluster',
-          namespace: 'my-app'
+          namespace: 'my-app',
         };
 
         mockManager.executeCommand
           .mockResolvedValueOnce({
             success: true,
-            data: 'Login successful. Using project "my-app".'
+            data: 'Login successful. Using project "my-app".',
           })
           .mockResolvedValueOnce({
             success: true,
-            data: 'Set namespace to my-app'
+            data: 'Set namespace to my-app',
           })
           .mockResolvedValueOnce({
             success: true,
-            data: 'developer@company.com'
+            data: 'developer@company.com',
           })
           .mockResolvedValueOnce({
             success: true,
-            data: 'production-cluster'
+            data: 'production-cluster',
           });
 
         const result = await handleOcLogin(args);
 
         expect(result.isError).toBeFalsy();
-        expect(result.content[0].text).toContain('**Server**: https://api.cluster.example.com:6443');
+        expect(result.content[0].text).toContain(
+          '**Server**: https://api.cluster.example.com:6443'
+        );
         expect(result.content[0].text).toContain('**Auth Method**: token');
         expect(result.content[0].text).toContain('**Context**: production-cluster');
         expect(result.content[0].text).toContain('**Namespace**: my-app');
@@ -670,21 +697,21 @@ describe('oc-login tool', () => {
         const args: OcLoginArgs = {
           server: 'https://api.cluster.example.com:6443',
           authMethod: 'token',
-          token: 'valid-token-12345'
+          token: 'valid-token-12345',
         };
 
         mockManager.executeCommand
           .mockResolvedValueOnce({
             success: true,
-            data: 'Login successful'
+            data: 'Login successful',
           })
           .mockResolvedValueOnce({
             success: true,
-            data: 'test-user'
+            data: 'test-user',
           })
           .mockResolvedValueOnce({
             success: true,
-            data: 'test-context'
+            data: 'test-context',
           });
 
         const result = await handleOcLogin(args);
@@ -701,21 +728,21 @@ describe('oc-login tool', () => {
         const args: OcLoginArgs = {
           server: 'https://api.cluster.example.com:6443',
           authMethod: 'token',
-          token: 'valid-token-12345'
+          token: 'valid-token-12345',
         };
 
         mockManager.executeCommand
           .mockResolvedValueOnce({
             success: true,
-            data: 'Login successful'
+            data: 'Login successful',
           })
           .mockResolvedValueOnce({
             success: true,
-            data: 'test-user'
+            data: 'test-user',
           })
           .mockResolvedValueOnce({
             success: true,
-            data: 'test-context'
+            data: 'test-context',
           });
 
         const result = await handleOcLogin(args);
@@ -729,12 +756,12 @@ describe('oc-login tool', () => {
         const args: OcLoginArgs = {
           server: 'https://api.cluster.example.com:6443',
           authMethod: 'token',
-          token: 'invalid-token'
+          token: 'invalid-token',
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: false,
-          error: 'Unauthorized'
+          error: 'Unauthorized',
         });
 
         const result = await handleOcLogin(args);

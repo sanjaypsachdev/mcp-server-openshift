@@ -18,7 +18,9 @@ describe('oc-explain tool', () => {
   describe('tool definition', () => {
     it('should have correct tool definition', () => {
       expect(ocExplainTool.name).toBe('oc_explain');
-      expect(ocExplainTool.description).toBe('Explain OpenShift/Kubernetes resource schemas, fields, and API documentation');
+      expect(ocExplainTool.description).toBe(
+        'Explain OpenShift/Kubernetes resource schemas, fields, and API documentation'
+      );
       expect(ocExplainTool.inputSchema.type).toBe('object');
       expect(ocExplainTool.inputSchema.required).toEqual(['resource']);
     });
@@ -68,12 +70,12 @@ FIELDS:
     describe('basic functionality', () => {
       it('should explain a basic resource', async () => {
         const args: OcExplainArgs = {
-          resource: 'pod'
+          resource: 'pod',
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: true,
-          data: mockExplainOutput
+          data: mockExplainOutput,
         });
 
         const result = await handleOcExplain(args);
@@ -84,38 +86,41 @@ FIELDS:
         expect(result.content[0].text).toContain('Resource Documentation');
         expect(mockManager.executeCommand).toHaveBeenCalledWith(['explain', 'pod'], {
           context: undefined,
-          timeout: 30000
+          timeout: 30000,
         });
       });
 
       it('should explain a specific field', async () => {
         const args: OcExplainArgs = {
           resource: 'pod',
-          field: 'spec.containers'
+          field: 'spec.containers',
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: true,
-          data: 'FIELD: spec.containers <[]Object>'
+          data: 'FIELD: spec.containers <[]Object>',
         });
 
         await handleOcExplain(args);
 
-        expect(mockManager.executeCommand).toHaveBeenCalledWith(['explain', 'pod.spec.containers'], {
-          context: undefined,
-          timeout: 30000
-        });
+        expect(mockManager.executeCommand).toHaveBeenCalledWith(
+          ['explain', 'pod.spec.containers'],
+          {
+            context: undefined,
+            timeout: 30000,
+          }
+        );
       });
 
       it('should handle API version specification', async () => {
         const args: OcExplainArgs = {
           resource: 'deployment',
-          apiVersion: 'apps/v1'
+          apiVersion: 'apps/v1',
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: true,
-          data: 'KIND: Deployment'
+          data: 'KIND: Deployment',
         });
 
         await handleOcExplain(args);
@@ -129,12 +134,12 @@ FIELDS:
       it('should handle recursive option', async () => {
         const args: OcExplainArgs = {
           resource: 'pod',
-          recursive: true
+          recursive: true,
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: true,
-          data: 'Recursive pod explanation...'
+          data: 'Recursive pod explanation...',
         });
 
         await handleOcExplain(args);
@@ -148,13 +153,13 @@ FIELDS:
       it('should handle JSON output format', async () => {
         const args: OcExplainArgs = {
           resource: 'service',
-          output: 'json'
+          output: 'json',
         };
 
         const jsonOutput = '{"kind": "Service", "apiVersion": "v1"}';
         mockManager.executeCommand.mockResolvedValue({
           success: true,
-          data: jsonOutput
+          data: jsonOutput,
         });
 
         const result = await handleOcExplain(args);
@@ -171,7 +176,7 @@ FIELDS:
     describe('resource validation', () => {
       it('should reject empty resource name', async () => {
         const args: OcExplainArgs = {
-          resource: ''
+          resource: '',
         };
 
         const result = await handleOcExplain(args);
@@ -182,7 +187,7 @@ FIELDS:
 
       it('should reject invalid resource name characters', async () => {
         const args: OcExplainArgs = {
-          resource: 'invalid@resource!'
+          resource: 'invalid@resource!',
         };
 
         const result = await handleOcExplain(args);
@@ -198,7 +203,7 @@ FIELDS:
           'pods',
           'deployment.apps',
           'route.route.openshift.io',
-          'buildconfig.build.openshift.io'
+          'buildconfig.build.openshift.io',
         ];
 
         for (const resource of validResources) {
@@ -206,7 +211,7 @@ FIELDS:
 
           mockManager.executeCommand.mockResolvedValue({
             success: true,
-            data: `KIND: ${resource}`
+            data: `KIND: ${resource}`,
           });
 
           const result = await handleOcExplain(args);
@@ -218,12 +223,12 @@ FIELDS:
     describe('error handling', () => {
       it('should handle resource not found errors', async () => {
         const args: OcExplainArgs = {
-          resource: 'nonexistent'
+          resource: 'nonexistent',
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: false,
-          error: 'error: resource mapping not found for name "nonexistent"'
+          error: 'error: resource mapping not found for name "nonexistent"',
         });
 
         const result = await handleOcExplain(args);
@@ -238,12 +243,12 @@ FIELDS:
       it('should handle field not found errors', async () => {
         const args: OcExplainArgs = {
           resource: 'pod',
-          field: 'nonexistent.field'
+          field: 'nonexistent.field',
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: false,
-          error: 'error: field "nonexistent.field" does not exist'
+          error: 'error: field "nonexistent.field" does not exist',
         });
 
         const result = await handleOcExplain(args);
@@ -256,7 +261,7 @@ FIELDS:
 
       it('should handle unexpected errors', async () => {
         const args: OcExplainArgs = {
-          resource: 'pod'
+          resource: 'pod',
         };
 
         mockManager.executeCommand.mockRejectedValue(new Error('Connection timeout'));
@@ -275,12 +280,12 @@ FIELDS:
           resource: 'deployment',
           field: 'spec',
           apiVersion: 'apps/v1',
-          recursive: false
+          recursive: false,
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: true,
-          data: mockExplainOutput
+          data: mockExplainOutput,
         });
 
         const result = await handleOcExplain(args);
@@ -295,12 +300,12 @@ FIELDS:
 
       it('should include helpful commands in response', async () => {
         const args: OcExplainArgs = {
-          resource: 'service'
+          resource: 'service',
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: true,
-          data: 'Service explanation...'
+          data: 'Service explanation...',
         });
 
         const result = await handleOcExplain(args);
@@ -317,20 +322,20 @@ FIELDS:
       it('should pass context to command execution', async () => {
         const args: OcExplainArgs = {
           resource: 'pod',
-          context: 'test-cluster'
+          context: 'test-cluster',
         };
 
         mockManager.executeCommand.mockResolvedValue({
           success: true,
-          data: mockExplainOutput
+          data: mockExplainOutput,
         });
 
         await handleOcExplain(args);
 
-        expect(mockManager.executeCommand).toHaveBeenCalledWith(
-          expect.any(Array),
-          { context: 'test-cluster', timeout: 30000 }
-        );
+        expect(mockManager.executeCommand).toHaveBeenCalledWith(expect.any(Array), {
+          context: 'test-cluster',
+          timeout: 30000,
+        });
       });
     });
   });
