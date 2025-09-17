@@ -5,23 +5,23 @@
 
 import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { z } from 'zod';
-import { 
-  createToolContext, 
-  initializeTool, 
-  verifyResource, 
-  createSuccessResponse, 
+import {
+  createToolContext,
+  initializeTool,
+  verifyResource,
+  createSuccessResponse,
   handleUnexpectedError,
   executeCommand,
 } from '../utils/tool-base.js';
-import { 
-  validateRequiredParams, 
-  validateResourceName, 
+import {
+  validateRequiredParams,
+  validateResourceName,
   validateNamespace,
   validateResourceType,
 } from '../utils/validation-helpers.js';
-import { 
-  discoverResourceInfo, 
-  getResourceStatus, 
+import {
+  discoverResourceInfo,
+  getResourceStatus,
   isClusterScopedResource,
 } from '../utils/resource-helpers.js';
 
@@ -86,9 +86,10 @@ export async function handleOcStatus(params: OcStatusParams) {
       () => validateRequiredParams(validated, ['resourceType', 'name']),
       () => validateResourceType(validated.resourceType),
       () => validateResourceName(validated.name),
-      () => isClusterScopedResource(validated.resourceType) 
-        ? { valid: true }
-        : validateNamespace(validated.namespace),
+      () =>
+        isClusterScopedResource(validated.resourceType)
+          ? { valid: true }
+          : validateNamespace(validated.namespace),
     ]);
 
     if (!paramValidation.success) {
@@ -96,9 +97,7 @@ export async function handleOcStatus(params: OcStatusParams) {
     }
 
     // Determine namespace for the operation
-    const namespace = isClusterScopedResource(validated.resourceType) 
-      ? '' 
-      : validated.namespace;
+    const namespace = isClusterScopedResource(validated.resourceType) ? '' : validated.namespace;
 
     // Verify resource exists using shared utility
     const resourceVerification = await verifyResource(
@@ -135,8 +134,15 @@ export async function handleOcStatus(params: OcStatusParams) {
     ctx.logger.addProgress('📋 Retrieving resource events...');
     const eventsResult = await executeCommand(
       ctx,
-      ['get', 'events', '--field-selector', `involvedObject.name=${validated.name}`, 
-       ...(namespace ? ['-n', namespace] : []), '--sort-by=.lastTimestamp', '--limit=5'],
+      [
+        'get',
+        'events',
+        '--field-selector',
+        `involvedObject.name=${validated.name}`,
+        ...(namespace ? ['-n', namespace] : []),
+        '--sort-by=.lastTimestamp',
+        '--limit=5',
+      ],
       'Retrieve recent events',
       { context: validated.context }
     );
@@ -146,8 +152,12 @@ export async function handleOcStatus(params: OcStatusParams) {
     if (validated.detailed) {
       descriptionResult = await executeCommand(
         ctx,
-        ['describe', validated.resourceType, validated.name, 
-         ...(namespace ? ['-n', namespace] : [])],
+        [
+          'describe',
+          validated.resourceType,
+          validated.name,
+          ...(namespace ? ['-n', namespace] : []),
+        ],
         'Get detailed resource description',
         { context: validated.context }
       );
@@ -173,7 +183,7 @@ export async function handleOcStatus(params: OcStatusParams) {
     if (resourceInfo.metadata?.labels || resourceInfo.metadata?.annotations) {
       const labelCount = Object.keys(resourceInfo.metadata?.labels || {}).length;
       const annotationCount = Object.keys(resourceInfo.metadata?.annotations || {}).length;
-      
+
       additionalSections.push({
         title: '🏷️  Labels & Annotations',
         content: [
@@ -189,7 +199,11 @@ export async function handleOcStatus(params: OcStatusParams) {
         title: '📦 Container Information',
         content: [
           `- **Containers**: ${discoveryInfo.containers.join(', ')}`,
-          ...(discoveryInfo.ports ? [`- **Exposed Ports**: ${discoveryInfo.ports.map(p => `${p.port}/${p.protocol}`).join(', ')}`] : []),
+          ...(discoveryInfo.ports
+            ? [
+                `- **Exposed Ports**: ${discoveryInfo.ports.map(p => `${p.port}/${p.protocol}`).join(', ')}`,
+              ]
+            : []),
         ],
       });
     }
@@ -200,7 +214,9 @@ export async function handleOcStatus(params: OcStatusParams) {
         title: '📋 Recent Events',
         content: [
           '```',
-          typeof eventsResult.data === 'string' ? eventsResult.data : JSON.stringify(eventsResult.data, null, 2),
+          typeof eventsResult.data === 'string'
+            ? eventsResult.data
+            : JSON.stringify(eventsResult.data, null, 2),
           '```',
         ],
       });
@@ -212,7 +228,9 @@ export async function handleOcStatus(params: OcStatusParams) {
         title: '📝 Detailed Description',
         content: [
           '```',
-          typeof descriptionResult.data === 'string' ? descriptionResult.data : JSON.stringify(descriptionResult.data, null, 2),
+          typeof descriptionResult.data === 'string'
+            ? descriptionResult.data
+            : JSON.stringify(descriptionResult.data, null, 2),
           '```',
         ],
       });
@@ -251,7 +269,6 @@ export async function handleOcStatus(params: OcStatusParams) {
       additionalSections,
       commands,
     });
-
   } catch (error) {
     return handleUnexpectedError(ctx, error, 'Status Check');
   }
@@ -264,25 +281,27 @@ function validateParameters(
 ): { success: boolean; response?: any } {
   const results = validations.map(validation => validation());
   const errors = results.filter(result => !result.valid);
-  
+
   if (errors.length > 0) {
     const errorMessage = errors.map(error => error.error).join('; ');
     ctx.logger.addValidationError(errorMessage);
     return {
       success: false,
       response: {
-        content: [{
-          type: 'text' as const,
-          text: `❌ Parameter validation failed: ${errorMessage}`,
-        }],
+        content: [
+          {
+            type: 'text' as const,
+            text: `❌ Parameter validation failed: ${errorMessage}`,
+          },
+        ],
         isError: true,
       },
     };
   }
-  
+
   // Log any warnings
   const warnings = results.flatMap(result => result.warnings || []);
   warnings.forEach(warning => ctx.logger.addProgress(`⚠️  ${warning}`, 'WARNING'));
-  
+
   return { success: true };
 }

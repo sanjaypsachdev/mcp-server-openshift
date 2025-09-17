@@ -5,9 +5,21 @@
 
 import { OpenShiftManager } from './openshift-manager.js';
 import { createProgressLogger, type LogLevel } from './progress-logger.js';
-import { formatSuccessResponse, formatErrorResponse, getStandardTroubleshootingSteps, analyzeError, type MCPResponse, type SuccessResponseOptions, type ErrorResponseOptions } from './response-formatter.js';
+import {
+  formatSuccessResponse,
+  formatErrorResponse,
+  getStandardTroubleshootingSteps,
+  analyzeError,
+  type MCPResponse,
+  type SuccessResponseOptions,
+  type ErrorResponseOptions,
+} from './response-formatter.js';
 import { validateResourceForOperation } from './resource-helpers.js';
-import { validateRequiredParams, validateMultiple, type ValidationResult } from './validation-helpers.js';
+import {
+  validateRequiredParams,
+  validateMultiple,
+  type ValidationResult,
+} from './validation-helpers.js';
 
 export interface ToolContext {
   manager: OpenShiftManager;
@@ -77,7 +89,7 @@ export async function verifyResource(
   context?: string
 ): Promise<{ success: true; resourceInfo: any } | { success: false; response: MCPResponse }> {
   ctx.logger.addResourceVerification(resourceType, name);
-  
+
   const validation = await validateResourceForOperation(
     ctx.manager,
     resourceType,
@@ -92,30 +104,23 @@ export async function verifyResource(
     const errorAnalysis = analyzeError(validation.error || 'Resource not found');
     return {
       success: false,
-      response: formatErrorResponse(
-        ctx.logger,
-        'Resource verification failed',
-        validation.error,
-        {
-          title: `${operationType} Failed`,
-          operationType,
-          errorAnalysis,
-          troubleshootingSteps: getStandardTroubleshootingSteps(
-            operationType.toLowerCase() as any,
-            namespace
-          ),
-        }
-      ),
+      response: formatErrorResponse(ctx.logger, 'Resource verification failed', validation.error, {
+        title: `${operationType} Failed`,
+        operationType,
+        errorAnalysis,
+        troubleshootingSteps: getStandardTroubleshootingSteps(
+          operationType.toLowerCase() as any,
+          namespace
+        ),
+      }),
     };
   }
 
   ctx.logger.addResourceVerified(resourceType, name);
-  
+
   // Log any warnings
   if (validation.warnings) {
-    validation.warnings.forEach(warning => 
-      ctx.logger.addProgress(`⚠️  ${warning}`, 'WARNING')
-    );
+    validation.warnings.forEach(warning => ctx.logger.addProgress(`⚠️  ${warning}`, 'WARNING'));
   }
 
   return { success: true, resourceInfo: validation.resourceInfo };
@@ -142,20 +147,14 @@ export function createErrorResponse(
   options: ErrorResponseOptions = {}
 ): MCPResponse {
   ctx.logger.addCompletion(options.operationType || 'Operation', false);
-  
+
   const errorAnalysis = options.errorAnalysis || analyzeError(errorDetails || errorTitle);
-  
-  return formatErrorResponse(
-    ctx.logger,
-    errorTitle,
-    errorDetails,
-    {
-      ...options,
-      errorAnalysis,
-      troubleshootingSteps: options.troubleshootingSteps || 
-        getStandardTroubleshootingSteps('create'), // default troubleshooting
-    }
-  );
+
+  return formatErrorResponse(ctx.logger, errorTitle, errorDetails, {
+    ...options,
+    errorAnalysis,
+    troubleshootingSteps: options.troubleshootingSteps || getStandardTroubleshootingSteps('create'), // default troubleshooting
+  });
 }
 
 /**
@@ -168,16 +167,11 @@ export function handleUnexpectedError(
 ): MCPResponse {
   const errorMessage = error instanceof Error ? error.message : String(error);
   ctx.logger.addProgress(`💥 Unexpected error: ${errorMessage}`, 'ERROR');
-  
-  return createErrorResponse(
-    ctx,
-    'Unexpected error occurred',
-    errorMessage,
-    {
-      title: `${operationType} Failed`,
-      operationType,
-    }
-  );
+
+  return createErrorResponse(ctx, 'Unexpected error occurred', errorMessage, {
+    title: `${operationType} Failed`,
+    operationType,
+  });
 }
 
 /**
@@ -189,28 +183,21 @@ export function validateParameters(
   operationType: string = 'Operation'
 ): { success: true } | { success: false; response: MCPResponse } {
   const result = validateMultiple(validations);
-  
+
   if (!result.valid) {
     ctx.logger.addValidationError(result.error!);
     return {
       success: false,
-      response: createErrorResponse(
-        ctx,
-        'Parameter validation failed',
-        result.error,
-        {
-          title: `${operationType} Failed`,
-          operationType,
-        }
-      ),
+      response: createErrorResponse(ctx, 'Parameter validation failed', result.error, {
+        title: `${operationType} Failed`,
+        operationType,
+      }),
     };
   }
 
   // Log any warnings
   if (result.warnings) {
-    result.warnings.forEach(warning => 
-      ctx.logger.addProgress(`⚠️  ${warning}`, 'WARNING')
-    );
+    result.warnings.forEach(warning => ctx.logger.addProgress(`⚠️  ${warning}`, 'WARNING'));
   }
 
   return { success: true };
@@ -228,11 +215,11 @@ export async function executeOperation<T>(
 ): Promise<MCPResponse> {
   try {
     const result = await operation();
-    
+
     if (onSuccess) {
       return onSuccess(result);
     }
-    
+
     return createSuccessResponse(ctx, {
       title: `${operationType} Successful`,
       operationType,
@@ -241,7 +228,7 @@ export async function executeOperation<T>(
     if (onError) {
       return onError(error);
     }
-    
+
     return handleUnexpectedError(ctx, error, operationType);
   }
 }
@@ -257,14 +244,14 @@ export async function executeCommand(
 ): Promise<{ success: boolean; data?: any; error?: string }> {
   ctx.logger.addProgress(`🔨 ${description}...`);
   ctx.logger.addProgress(`📝 Command: oc ${args.join(' ')}`);
-  
+
   const result = await ctx.manager.executeCommand(args, options);
-  
+
   if (result.success) {
     ctx.logger.addProgress(`✅ ${description} completed successfully`, 'SUCCESS');
   } else {
     ctx.logger.addProgress(`❌ ${description} failed: ${result.error}`, 'ERROR');
   }
-  
+
   return result;
 }

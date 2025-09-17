@@ -18,27 +18,18 @@ import {
 describe('validation-helpers', () => {
   describe('validateRequiredParams', () => {
     it('should pass when all required params are provided', () => {
-      const result = validateRequiredParams(
-        { name: 'test', type: 'pod' },
-        ['name', 'type']
-      );
+      const result = validateRequiredParams({ name: 'test', type: 'pod' }, ['name', 'type']);
       expect(result.valid).toBe(true);
     });
 
     it('should fail when required params are missing', () => {
-      const result = validateRequiredParams(
-        { name: 'test' },
-        ['name', 'type', 'namespace']
-      );
+      const result = validateRequiredParams({ name: 'test' }, ['name', 'type', 'namespace']);
       expect(result.valid).toBe(false);
       expect(result.error).toContain('Missing required fields: type, namespace');
     });
 
     it('should fail when required params are empty strings', () => {
-      const result = validateRequiredParams(
-        { name: '', type: 'pod' },
-        ['name', 'type']
-      );
+      const result = validateRequiredParams({ name: '', type: 'pod' }, ['name', 'type']);
       expect(result.valid).toBe(false);
       expect(result.error).toContain('Missing required fields: name');
     });

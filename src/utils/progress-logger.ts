@@ -120,7 +120,7 @@ export class ProgressLogger {
     const level = success ? 'SUCCESS' : 'ERROR';
     const emoji = success ? '🎉' : '💥';
     const status = success ? 'completed successfully' : 'failed';
-    
+
     this.addProgress(`${emoji} ${operationName} ${status} in ${totalTime}s`, level);
   }
 
@@ -154,7 +154,7 @@ export class ProgressLogger {
   }
 
   addResourceNotFound(resourceType: string, name: string, error?: string): void {
-    const message = error 
+    const message = error
       ? `❌ Resource ${resourceType}/${name} verification failed: ${error}`
       : `❌ Resource ${resourceType}/${name} not found`;
     this.addProgress(message, 'ERROR');
@@ -178,7 +178,7 @@ export function createLegacyProgressLogger(): {
   getLogger: () => ProgressLogger;
 } {
   const logger = new ProgressLogger();
-  
+
   return {
     addProgress: (message: string, level: LogLevel = 'INFO') => {
       logger.addProgress(message, level);

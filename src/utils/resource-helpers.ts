@@ -106,7 +106,13 @@ export async function discoverResourceInfo(
   context?: string
 ): Promise<ResourceDiscoveryResult> {
   try {
-    const resourceInfo = await verifyResourceExists(manager, resourceType, name, namespace, context);
+    const resourceInfo = await verifyResourceExists(
+      manager,
+      resourceType,
+      name,
+      namespace,
+      context
+    );
 
     if (!resourceInfo.success || !resourceInfo.exists) {
       return {
@@ -142,18 +148,20 @@ export function extractContainers(resource: any): ContainerInfo[] {
   const containers: ContainerInfo[] = [];
 
   // Check different resource types for container specs
-  const containerSpecs = 
-    resource.spec?.template?.spec?.containers ||  // Deployment, ReplicaSet
-    resource.spec?.containers ||                  // Pod
+  const containerSpecs =
+    resource.spec?.template?.spec?.containers || // Deployment, ReplicaSet
+    resource.spec?.containers || // Pod
     resource.spec?.jobTemplate?.spec?.template?.spec?.containers || // CronJob
     [];
 
   if (Array.isArray(containerSpecs)) {
-    containers.push(...containerSpecs.map((container: any) => ({
-      name: container.name || 'unnamed',
-      image: container.image,
-      ports: container.ports || [],
-    })));
+    containers.push(
+      ...containerSpecs.map((container: any) => ({
+        name: container.name || 'unnamed',
+        image: container.image,
+        ports: container.ports || [],
+      }))
+    );
   }
 
   return containers;
@@ -162,26 +170,32 @@ export function extractContainers(resource: any): ContainerInfo[] {
 /**
  * Extract port information from a resource
  */
-export function extractPorts(resource: any): Array<{ name?: string; port: number; protocol?: string }> {
+export function extractPorts(
+  resource: any
+): Array<{ name?: string; port: number; protocol?: string }> {
   const ports: Array<{ name?: string; port: number; protocol?: string }> = [];
 
   // For services, get ports from spec.ports
   if (resource.kind === 'Service' && resource.spec?.ports) {
-    ports.push(...resource.spec.ports.map((port: any) => ({
-      name: port.name,
-      port: port.port,
-      protocol: port.protocol || 'TCP',
-    })));
+    ports.push(
+      ...resource.spec.ports.map((port: any) => ({
+        name: port.name,
+        port: port.port,
+        protocol: port.protocol || 'TCP',
+      }))
+    );
   } else {
     // For other resources, extract from containers
     const containers = extractContainers(resource);
     containers.forEach(container => {
       if (container.ports) {
-        ports.push(...container.ports.map(port => ({
-          name: port.name,
-          port: port.containerPort,
-          protocol: port.protocol || 'TCP',
-        })));
+        ports.push(
+          ...container.ports.map(port => ({
+            name: port.name,
+            port: port.containerPort,
+            protocol: port.protocol || 'TCP',
+          }))
+        );
       }
     });
   }
@@ -205,7 +219,13 @@ export async function detectTargetPort(
 
     // If resource data wasn't provided, fetch it
     if (!resource) {
-      const resourceInfo = await verifyResourceExists(manager, resourceType, name, namespace, context);
+      const resourceInfo = await verifyResourceExists(
+        manager,
+        resourceType,
+        name,
+        namespace,
+        context
+      );
       if (!resourceInfo.success || !resourceInfo.exists) {
         return { warning: 'Could not retrieve resource details' };
       }
@@ -213,7 +233,7 @@ export async function detectTargetPort(
     }
 
     const ports = extractPorts(resource);
-    
+
     if (ports.length === 0) {
       return { warning: 'No ports found in resource specification' };
     }
@@ -221,10 +241,9 @@ export async function detectTargetPort(
     // Return the first port (name if available, otherwise port number)
     const firstPort = ports[0];
     return { port: firstPort.name || firstPort.port.toString() };
-
   } catch (error) {
-    return { 
-      warning: `Port detection failed: ${error instanceof Error ? error.message : String(error)}` 
+    return {
+      warning: `Port detection failed: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
 }
@@ -247,19 +266,21 @@ export async function ensureNamespace(
     }
 
     if (!create) {
-      return { 
-        success: false, 
-        error: `Namespace ${namespace} does not exist` 
+      return {
+        success: false,
+        error: `Namespace ${namespace} does not exist`,
       };
     }
 
     // Create namespace
-    const createResult = await manager.executeCommand(['create', 'namespace', namespace], { context });
-    
+    const createResult = await manager.executeCommand(['create', 'namespace', namespace], {
+      context,
+    });
+
     if (!createResult.success) {
-      return { 
-        success: false, 
-        error: `Failed to create namespace: ${createResult.error}` 
+      return {
+        success: false,
+        error: `Failed to create namespace: ${createResult.error}`,
       };
     }
 
@@ -283,31 +304,31 @@ export function getResourceStatus(resource: any): string {
   switch (kind) {
     case 'pod':
       return resource.status?.phase || 'Unknown';
-    
+
     case 'deployment':
       const spec = resource.spec || {};
       const status = resource.status || {};
       const desired = spec.replicas || 0;
       const ready = status.readyReplicas || 0;
       return `${ready}/${desired} ready`;
-    
+
     case 'service':
       const clusterIP = resource.spec?.clusterIP;
       const type = resource.spec?.type || 'ClusterIP';
       return `${type}${clusterIP ? ` (${clusterIP})` : ''}`;
-    
+
     case 'route':
       const host = resource.spec?.host;
       return host ? `Available at ${host}` : 'No host assigned';
-    
+
     case 'persistentvolumeclaim':
       return resource.status?.phase || 'Unknown';
-    
+
     case 'node':
       const conditions = resource.status?.conditions || [];
       const readyCondition = conditions.find((c: any) => c.type === 'Ready');
       return readyCondition?.status === 'True' ? 'Ready' : 'NotReady';
-    
+
     default:
       // Generic status extraction
       if (resource.status?.phase) return resource.status.phase;
@@ -326,14 +347,28 @@ export function getResourceStatus(resource: any): string {
  */
 export function isClusterScopedResource(resourceType: string): boolean {
   const clusterScopedResources = [
-    'node', 'nodes',
-    'namespace', 'namespaces', 'ns',
-    'persistentvolume', 'persistentvolumes', 'pv',
-    'clusterrole', 'clusterroles',
-    'clusterrolebinding', 'clusterrolebindings',
-    'customresourcedefinition', 'customresourcedefinitions', 'crd', 'crds',
-    'storageclass', 'storageclasses', 'sc',
-    'priorityclass', 'priorityclasses', 'pc',
+    'node',
+    'nodes',
+    'namespace',
+    'namespaces',
+    'ns',
+    'persistentvolume',
+    'persistentvolumes',
+    'pv',
+    'clusterrole',
+    'clusterroles',
+    'clusterrolebinding',
+    'clusterrolebindings',
+    'customresourcedefinition',
+    'customresourcedefinitions',
+    'crd',
+    'crds',
+    'storageclass',
+    'storageclasses',
+    'sc',
+    'priorityclass',
+    'priorityclasses',
+    'pc',
   ];
 
   return clusterScopedResources.includes(resourceType.toLowerCase());
@@ -351,22 +386,22 @@ export function parseResourceReference(resourceRef: string): {
   // - "pod/my-pod"
   // - "deployment.apps/my-deployment"
   // - "my-resource"
-  
+
   const parts = resourceRef.split('/');
-  
+
   if (parts.length === 2) {
     return {
       resourceType: parts[0],
       name: parts[1],
     };
   }
-  
+
   if (parts.length === 1) {
     return {
       name: parts[0],
     };
   }
-  
+
   return {};
 }
 
@@ -440,7 +475,7 @@ export async function validateResourceForOperation(
         };
       }
       break;
-    
+
     case 'logs':
       // Check if resource supports logs (has containers)
       const containers = extractContainers(resourceInfo.data);

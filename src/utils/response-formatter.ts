@@ -62,14 +62,9 @@ export function formatSuccessResponse(
   } = options;
 
   // Get progress log as string array
-  const logEntries = Array.isArray(progressLog) 
-    ? progressLog 
-    : progressLog.getFormattedLog();
+  const logEntries = Array.isArray(progressLog) ? progressLog : progressLog.getFormattedLog();
 
-  const response: string[] = [
-    `# ✅ ${title}`,
-    ``,
-  ];
+  const response: string[] = [`# ✅ ${title}`, ``];
 
   // Add operation summary if resource info provided
   if (resourceType || resourceName || namespace) {
@@ -139,9 +134,7 @@ export function formatErrorResponse(
   } = options;
 
   // Get progress log as string array
-  const logEntries = Array.isArray(progressLog) 
-    ? progressLog 
-    : progressLog.getFormattedLog();
+  const logEntries = Array.isArray(progressLog) ? progressLog : progressLog.getFormattedLog();
 
   const response: string[] = [
     `# ❌ ${title}`,
@@ -208,9 +201,7 @@ export function formatDryRunResponse(
   result: any,
   operationType: string = 'Operation'
 ): MCPResponse {
-  const logEntries = Array.isArray(progressLog) 
-    ? progressLog 
-    : progressLog.getFormattedLog();
+  const logEntries = Array.isArray(progressLog) ? progressLog : progressLog.getFormattedLog();
 
   const response = [
     `# 🧪 Dry Run Validation Successful`,
@@ -241,7 +232,10 @@ export function formatDryRunResponse(
 /**
  * Create standard troubleshooting steps for different operation types
  */
-export function getStandardTroubleshootingSteps(operationType: 'apply' | 'delete' | 'get' | 'logs' | 'expose' | 'patch' | 'create', namespace?: string): string[] {
+export function getStandardTroubleshootingSteps(
+  operationType: 'apply' | 'delete' | 'get' | 'logs' | 'expose' | 'patch' | 'create',
+  namespace?: string
+): string[] {
   const baseSteps = [
     'Review the error details and progress log above',
     'Check cluster connectivity: `oc whoami`',
@@ -355,7 +349,11 @@ export function analyzeError(errorMessage: string, operationType?: string): Erro
   }
 
   // Network/connectivity errors
-  if (error.includes('connection refused') || error.includes('timeout') || error.includes('network')) {
+  if (
+    error.includes('connection refused') ||
+    error.includes('timeout') ||
+    error.includes('network')
+  ) {
     return {
       category: 'Connectivity Error',
       suggestions: [

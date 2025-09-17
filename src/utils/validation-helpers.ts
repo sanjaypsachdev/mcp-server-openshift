@@ -44,11 +44,12 @@ export function validateResourceName(name: string): ValidationResult {
 
   // OpenShift resource names must follow DNS-1123 label format
   const nameRegex = /^[a-z0-9]([-a-z0-9]*[a-z0-9])?$/;
-  
+
   if (!nameRegex.test(name)) {
     return {
       valid: false,
-      error: 'Resource name must consist of lower case alphanumeric characters or hyphens, and must start and end with an alphanumeric character',
+      error:
+        'Resource name must consist of lower case alphanumeric characters or hyphens, and must start and end with an alphanumeric character',
     };
   }
 
@@ -84,8 +85,9 @@ export function validateLabelSelector(selector: string): ValidationResult {
 
   // Basic validation for label selector format
   // More comprehensive validation would require parsing the entire selector syntax
-  const basicLabelRegex = /^[a-zA-Z0-9._/-]+(=[a-zA-Z0-9._/-]+)?(,[a-zA-Z0-9._/-]+(=[a-zA-Z0-9._/-]+)?)*$/;
-  
+  const basicLabelRegex =
+    /^[a-zA-Z0-9._/-]+(=[a-zA-Z0-9._/-]+)?(,[a-zA-Z0-9._/-]+(=[a-zA-Z0-9._/-]+)?)*$/;
+
   if (!basicLabelRegex.test(selector.replace(/\s/g, ''))) {
     return {
       valid: false,
@@ -106,7 +108,7 @@ export function validateUrl(url: string): ValidationResult {
 
   try {
     const parsedUrl = new URL(url);
-    
+
     // Only allow HTTP and HTTPS protocols for security
     if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
       return {
@@ -135,23 +137,20 @@ export function validateGitUrl(gitUrl: string): ValidationResult {
 
   try {
     const url = new URL(gitUrl);
-    
-    // Check for common Git hosting patterns
-    const gitHostPatterns = [
-      /^github\.com$/,
-      /^gitlab\.com$/,
-      /^bitbucket\.org$/,
-      /.*\.git$/,
-    ];
 
-    const isGitHost = gitHostPatterns.some(pattern => 
-      pattern.test(url.hostname) || pattern.test(url.pathname)
+    // Check for common Git hosting patterns
+    const gitHostPatterns = [/^github\.com$/, /^gitlab\.com$/, /^bitbucket\.org$/, /.*\.git$/];
+
+    const isGitHost = gitHostPatterns.some(
+      pattern => pattern.test(url.hostname) || pattern.test(url.pathname)
     );
 
     if (!isGitHost && !url.pathname.includes('.git')) {
       return {
         valid: true,
-        warnings: ['URL does not appear to be a Git repository. Ensure it points to a valid Git repository.'],
+        warnings: [
+          'URL does not appear to be a Git repository. Ensure it points to a valid Git repository.',
+        ],
       };
     }
 
@@ -191,14 +190,14 @@ export function validatePort(port: string | number): ValidationResult {
   // If it's a number, validate port range
   if (typeof port === 'number' || /^\d+$/.test(port.toString())) {
     const portNum = typeof port === 'number' ? port : parseInt(port.toString());
-    
+
     if (portNum < 1 || portNum > 65535) {
       return {
         valid: false,
         error: 'Port number must be between 1 and 65535',
       };
     }
-    
+
     return { valid: true };
   }
 
@@ -224,7 +223,7 @@ export function validateResourceType(resourceType: string): ValidationResult {
 
   // Basic validation - resource types should be lowercase and may contain dots for API groups
   const resourceTypeRegex = /^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/;
-  
+
   if (!resourceTypeRegex.test(resourceType)) {
     return {
       valid: false,
@@ -320,7 +319,7 @@ export function validateKeyValuePairs(
     }
   }
 
-  return { 
+  return {
     valid: true,
     warnings: warnings.length > 0 ? warnings : undefined,
   };
