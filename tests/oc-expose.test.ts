@@ -56,7 +56,12 @@ describe('oc-expose tool', () => {
     it('should have correct resource type enum values', () => {
       const resourceTypeProperty = ocExposeTool.inputSchema.properties.resourceType;
       expect(resourceTypeProperty.enum).toEqual([
-        'service', 'svc', 'deploymentconfig', 'dc', 'deployment', 'deploy'
+        'service',
+        'svc',
+        'deploymentconfig',
+        'dc',
+        'deployment',
+        'deploy',
       ]);
     });
 
@@ -93,14 +98,14 @@ describe('oc-expose tool', () => {
           success: true,
           data: {
             metadata: { name: 'test-service' },
-            spec: { ports: [{ name: 'http', port: 8080 }] }
-          }
+            spec: { ports: [{ name: 'http', port: 8080 }] },
+          },
         });
 
         // Mock route creation
         mockManager.executeCommand.mockResolvedValueOnce({
           success: true,
-          data: 'route.route.openshift.io/test-service-route created'
+          data: 'route.route.openshift.io/test-service-route created',
         });
 
         // Mock route information retrieval
@@ -109,8 +114,8 @@ describe('oc-expose tool', () => {
           data: {
             metadata: { name: 'test-service-route' },
             spec: { host: 'test-service-route-default.apps.cluster.com', path: '/' },
-            status: {}
-          }
+            status: {},
+          },
         });
 
         const result = await handleOcExpose(params);
@@ -136,13 +141,13 @@ describe('oc-expose tool', () => {
         // Mock resource verification
         mockManager.getResources.mockResolvedValueOnce({
           success: true,
-          data: { metadata: { name: 'my-app' } }
+          data: { metadata: { name: 'my-app' } },
         });
 
         // Mock route creation
         mockManager.executeCommand.mockResolvedValueOnce({
           success: true,
-          data: 'route.route.openshift.io/custom-route created'
+          data: 'route.route.openshift.io/custom-route created',
         });
 
         // Mock route information retrieval
@@ -150,8 +155,8 @@ describe('oc-expose tool', () => {
           success: true,
           data: {
             metadata: { name: 'custom-route' },
-            spec: { host: 'custom-route-production.apps.cluster.com' }
-          }
+            spec: { host: 'custom-route-production.apps.cluster.com' },
+          },
         });
 
         const result = await handleOcExpose(params);
@@ -179,23 +184,23 @@ describe('oc-expose tool', () => {
           success: true,
           data: {
             metadata: { name: 'web-service' },
-            spec: { 
+            spec: {
               ports: [
                 { name: 'http', port: 8080 },
-                { name: 'https', port: 8443 }
-              ]
-            }
-          }
+                { name: 'https', port: 8443 },
+              ],
+            },
+          },
         });
 
         mockManager.executeCommand.mockResolvedValueOnce({
           success: true,
-          data: 'route.route.openshift.io/web-service-route created'
+          data: 'route.route.openshift.io/web-service-route created',
         });
 
         mockManager.getResources.mockResolvedValueOnce({
           success: true,
-          data: { metadata: { name: 'web-service-route' }, spec: { host: 'test.com' } }
+          data: { metadata: { name: 'web-service-route' }, spec: { host: 'test.com' } },
         });
 
         const result = await handleOcExpose(params);
@@ -217,17 +222,17 @@ describe('oc-expose tool', () => {
 
         mockManager.getResources.mockResolvedValueOnce({
           success: true,
-          data: { metadata: { name: 'web-service' } }
+          data: { metadata: { name: 'web-service' } },
         });
 
         mockManager.executeCommand.mockResolvedValueOnce({
           success: true,
-          data: 'route.route.openshift.io/web-service-route created'
+          data: 'route.route.openshift.io/web-service-route created',
         });
 
         mockManager.getResources.mockResolvedValueOnce({
           success: true,
-          data: { metadata: { name: 'web-service-route' }, spec: { host: 'test.com' } }
+          data: { metadata: { name: 'web-service-route' }, spec: { host: 'test.com' } },
         });
 
         const result = await handleOcExpose(params);
@@ -291,17 +296,17 @@ describe('oc-expose tool', () => {
 
         mockManager.getResources.mockResolvedValueOnce({
           success: true,
-          data: { metadata: { name: 'secure-service' } }
+          data: { metadata: { name: 'secure-service' } },
         });
 
         mockManager.executeCommand.mockResolvedValueOnce({
           success: true,
-          data: 'route.route.openshift.io/secure-service-route created'
+          data: 'route.route.openshift.io/secure-service-route created',
         });
 
         mockManager.getResources.mockResolvedValueOnce({
           success: true,
-          data: { metadata: { name: 'secure-service-route' }, spec: { host: 'test.com' } }
+          data: { metadata: { name: 'secure-service-route' }, spec: { host: 'test.com' } },
         });
 
         const result = await handleOcExpose(params);
@@ -310,9 +315,12 @@ describe('oc-expose tool', () => {
         expect(result.content[0].text).toContain('Resource Exposure Successful');
         expect(mockManager.executeCommand).toHaveBeenCalledWith(
           expect.arrayContaining([
-            '--cert', '/path/to/cert.pem',
-            '--key', '/path/to/key.pem',
-            '--ca-cert', '/path/to/ca.pem'
+            '--cert',
+            '/path/to/cert.pem',
+            '--key',
+            '/path/to/key.pem',
+            '--ca-cert',
+            '/path/to/ca.pem',
           ]),
           expect.any(Object)
         );
@@ -330,17 +338,17 @@ describe('oc-expose tool', () => {
 
         mockManager.getResources.mockResolvedValueOnce({
           success: true,
-          data: { metadata: { name: 'ssl-service' } }
+          data: { metadata: { name: 'ssl-service' } },
         });
 
         mockManager.executeCommand.mockResolvedValueOnce({
           success: true,
-          data: 'route.route.openshift.io/ssl-service-route created'
+          data: 'route.route.openshift.io/ssl-service-route created',
         });
 
         mockManager.getResources.mockResolvedValueOnce({
           success: true,
-          data: { metadata: { name: 'ssl-service-route' }, spec: { host: 'test.com' } }
+          data: { metadata: { name: 'ssl-service-route' }, spec: { host: 'test.com' } },
         });
 
         const result = await handleOcExpose(params);
@@ -367,17 +375,17 @@ describe('oc-expose tool', () => {
 
         mockManager.getResources.mockResolvedValueOnce({
           success: true,
-          data: { metadata: { name: 'reencrypt-service' } }
+          data: { metadata: { name: 'reencrypt-service' } },
         });
 
         mockManager.executeCommand.mockResolvedValueOnce({
           success: true,
-          data: 'route.route.openshift.io/reencrypt-service-route created'
+          data: 'route.route.openshift.io/reencrypt-service-route created',
         });
 
         mockManager.getResources.mockResolvedValueOnce({
           success: true,
-          data: { metadata: { name: 'reencrypt-service-route' }, spec: { host: 'test.com' } }
+          data: { metadata: { name: 'reencrypt-service-route' }, spec: { host: 'test.com' } },
         });
 
         const result = await handleOcExpose(params);
@@ -385,8 +393,11 @@ describe('oc-expose tool', () => {
         expect(result.content[0].text).toContain('reencrypt (secure)');
         expect(mockManager.executeCommand).toHaveBeenCalledWith(
           expect.arrayContaining([
-            'create', 'route', 'reencrypt',
-            '--dest-ca-cert', '/path/to/dest-ca.pem'
+            'create',
+            'route',
+            'reencrypt',
+            '--dest-ca-cert',
+            '/path/to/dest-ca.pem',
           ]),
           expect.any(Object)
         );
@@ -405,29 +416,26 @@ describe('oc-expose tool', () => {
 
         mockManager.getResources.mockResolvedValueOnce({
           success: true,
-          data: { metadata: { name: 'api-service' } }
+          data: { metadata: { name: 'api-service' } },
         });
 
         mockManager.executeCommand.mockResolvedValueOnce({
           success: true,
-          data: 'route.route.openshift.io/api-service-route created'
+          data: 'route.route.openshift.io/api-service-route created',
         });
 
         mockManager.getResources.mockResolvedValueOnce({
           success: true,
-          data: { 
-            metadata: { name: 'api-service-route' }, 
-            spec: { host: 'api.example.com', path: '/v1' } 
-          }
+          data: {
+            metadata: { name: 'api-service-route' },
+            spec: { host: 'api.example.com', path: '/v1' },
+          },
         });
 
         const result = await handleOcExpose(params);
 
         expect(mockManager.executeCommand).toHaveBeenCalledWith(
-          expect.arrayContaining([
-            '--hostname', 'api.example.com',
-            '--path', '/v1'
-          ]),
+          expect.arrayContaining(['--hostname', 'api.example.com', '--path', '/v1']),
           expect.any(Object)
         );
       });
@@ -442,17 +450,17 @@ describe('oc-expose tool', () => {
 
         mockManager.getResources.mockResolvedValueOnce({
           success: true,
-          data: { metadata: { name: 'wildcard-service' } }
+          data: { metadata: { name: 'wildcard-service' } },
         });
 
         mockManager.executeCommand.mockResolvedValueOnce({
           success: true,
-          data: 'route.route.openshift.io/wildcard-service-route created'
+          data: 'route.route.openshift.io/wildcard-service-route created',
         });
 
         mockManager.getResources.mockResolvedValueOnce({
           success: true,
-          data: { metadata: { name: 'wildcard-service-route' }, spec: { host: 'test.com' } }
+          data: { metadata: { name: 'wildcard-service-route' }, spec: { host: 'test.com' } },
         });
 
         const result = await handleOcExpose(params);
@@ -473,17 +481,17 @@ describe('oc-expose tool', () => {
 
         mockManager.getResources.mockResolvedValueOnce({
           success: true,
-          data: { metadata: { name: 'insecure-service' } }
+          data: { metadata: { name: 'insecure-service' } },
         });
 
         mockManager.executeCommand.mockResolvedValueOnce({
           success: true,
-          data: 'route.route.openshift.io/insecure-service-route created'
+          data: 'route.route.openshift.io/insecure-service-route created',
         });
 
         mockManager.getResources.mockResolvedValueOnce({
           success: true,
-          data: { metadata: { name: 'insecure-service-route' }, spec: { host: 'test.com' } }
+          data: { metadata: { name: 'insecure-service-route' }, spec: { host: 'test.com' } },
         });
 
         const result = await handleOcExpose(params);
@@ -505,27 +513,23 @@ describe('oc-expose tool', () => {
 
         mockManager.getResources.mockResolvedValueOnce({
           success: true,
-          data: { metadata: { name: 'labeled-service' } }
+          data: { metadata: { name: 'labeled-service' } },
         });
 
         mockManager.executeCommand.mockResolvedValueOnce({
           success: true,
-          data: 'route.route.openshift.io/labeled-service-route created'
+          data: 'route.route.openshift.io/labeled-service-route created',
         });
 
         mockManager.getResources.mockResolvedValueOnce({
           success: true,
-          data: { metadata: { name: 'labeled-service-route' }, spec: { host: 'test.com' } }
+          data: { metadata: { name: 'labeled-service-route' }, spec: { host: 'test.com' } },
         });
 
         const result = await handleOcExpose(params);
 
         expect(mockManager.executeCommand).toHaveBeenCalledWith(
-          expect.arrayContaining([
-            '-l', 'app=test',
-            '-l', 'version=v1',
-            '--weight', '100'
-          ]),
+          expect.arrayContaining(['-l', 'app=test', '-l', 'version=v1', '--weight', '100']),
           expect.any(Object)
         );
       });
@@ -540,22 +544,22 @@ describe('oc-expose tool', () => {
 
         mockManager.getResources.mockResolvedValueOnce({
           success: true,
-          data: { metadata: { name: 'annotated-service' } }
+          data: { metadata: { name: 'annotated-service' } },
         });
 
         mockManager.executeCommand
           .mockResolvedValueOnce({
             success: true,
-            data: 'route.route.openshift.io/annotated-service-route created'
+            data: 'route.route.openshift.io/annotated-service-route created',
           })
           .mockResolvedValueOnce({
             success: true,
-            data: 'route.route.openshift.io/annotated-service-route annotated'
+            data: 'route.route.openshift.io/annotated-service-route annotated',
           });
 
         mockManager.getResources.mockResolvedValueOnce({
           success: true,
-          data: { metadata: { name: 'annotated-service-route' }, spec: { host: 'test.com' } }
+          data: { metadata: { name: 'annotated-service-route' }, spec: { host: 'test.com' } },
         });
 
         const result = await handleOcExpose(params);
@@ -579,17 +583,17 @@ describe('oc-expose tool', () => {
 
         mockManager.getResources.mockResolvedValueOnce({
           success: true,
-          data: { metadata: { name: 'test-service' } }
+          data: { metadata: { name: 'test-service' } },
         });
 
         mockManager.executeCommand.mockResolvedValueOnce({
           success: true,
-          data: 'apiVersion: route.openshift.io/v1\nkind: Route\n...'
+          data: 'apiVersion: route.openshift.io/v1\nkind: Route\n...',
         });
 
         mockManager.getResources.mockResolvedValueOnce({
           success: true,
-          data: null // Route doesn't exist in dry run
+          data: null, // Route doesn't exist in dry run
         });
 
         const result = await handleOcExpose(params);
@@ -611,7 +615,7 @@ describe('oc-expose tool', () => {
 
         mockManager.getResources.mockResolvedValueOnce({
           success: false,
-          error: 'services "nonexistent-service" not found'
+          error: 'services "nonexistent-service" not found',
         });
 
         const result = await handleOcExpose(params);
@@ -630,12 +634,12 @@ describe('oc-expose tool', () => {
 
         mockManager.getResources.mockResolvedValueOnce({
           success: true,
-          data: { metadata: { name: 'test-service' } }
+          data: { metadata: { name: 'test-service' } },
         });
 
         mockManager.executeCommand.mockResolvedValueOnce({
           success: false,
-          error: 'routes.route.openshift.io "test-service-route" already exists'
+          error: 'routes.route.openshift.io "test-service-route" already exists',
         });
 
         const result = await handleOcExpose(params);
@@ -654,12 +658,13 @@ describe('oc-expose tool', () => {
 
         mockManager.getResources.mockResolvedValueOnce({
           success: true,
-          data: { metadata: { name: 'test-service' } }
+          data: { metadata: { name: 'test-service' } },
         });
 
         mockManager.executeCommand.mockResolvedValueOnce({
           success: false,
-          error: 'forbidden: User "test-user" cannot create resource "routes" in API group "route.openshift.io"'
+          error:
+            'forbidden: User "test-user" cannot create resource "routes" in API group "route.openshift.io"',
         });
 
         const result = await handleOcExpose(params);
@@ -699,24 +704,24 @@ describe('oc-expose tool', () => {
 
         mockManager.getResources.mockResolvedValueOnce({
           success: true,
-          data: { metadata: { name: 'web-service' } }
+          data: { metadata: { name: 'web-service' } },
         });
 
         mockManager.executeCommand.mockResolvedValueOnce({
           success: true,
-          data: 'route.route.openshift.io/web-service-route created'
+          data: 'route.route.openshift.io/web-service-route created',
         });
 
         mockManager.getResources.mockResolvedValueOnce({
           success: true,
           data: {
             metadata: { name: 'web-service-route' },
-            spec: { 
-              host: 'web.example.com', 
+            spec: {
+              host: 'web.example.com',
               path: '/app',
-              tls: { termination: 'edge', insecureEdgeTerminationPolicy: 'Redirect' }
-            }
-          }
+              tls: { termination: 'edge', insecureEdgeTerminationPolicy: 'Redirect' },
+            },
+          },
         });
 
         const result = await handleOcExpose(params);
@@ -741,7 +746,7 @@ describe('oc-expose tool', () => {
 
         mockManager.getResources.mockResolvedValueOnce({
           success: false,
-          error: 'connection refused'
+          error: 'connection refused',
         });
 
         const result = await handleOcExpose(params);
@@ -764,12 +769,12 @@ describe('oc-expose tool', () => {
 
         mockManager.getResources.mockResolvedValue({
           success: true,
-          data: { metadata: { name: 'test-service' } }
+          data: { metadata: { name: 'test-service' } },
         });
 
         mockManager.executeCommand.mockResolvedValue({
           success: true,
-          data: 'route.route.openshift.io/test-service-route created'
+          data: 'route.route.openshift.io/test-service-route created',
         });
 
         await handleOcExpose(params);

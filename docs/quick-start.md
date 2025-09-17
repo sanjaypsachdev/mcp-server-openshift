@@ -5,10 +5,11 @@ This guide will help you get started with the MCP OpenShift server.
 ## Prerequisites
 
 1. **OpenShift CLI**: Install the `oc` command-line tool
+
    ```bash
    # On macOS
    brew install openshift-cli
-   
+
    # On Linux (download from OpenShift releases)
    curl -L https://github.com/openshift/origin/releases/latest/download/openshift-origin-client-tools-*.tar.gz | tar xz
    ```
@@ -21,6 +22,7 @@ This guide will help you get started with the MCP OpenShift server.
 ## Installation
 
 1. Clone and build the server:
+
    ```bash
    git clone https://github.com/your-org/mcp-server-openshift.git
    cd mcp-server-openshift
@@ -55,6 +57,7 @@ Add the server to your Claude Desktop configuration file (`~/.claude/mcp.json`):
 ## Basic Usage Examples
 
 ### List all projects
+
 ```json
 {
   "name": "oc_get",
@@ -65,9 +68,10 @@ Add the server to your Claude Desktop configuration file (`~/.claude/mcp.json`):
 ```
 
 ### Get pods in a specific namespace
+
 ```json
 {
-  "name": "oc_get", 
+  "name": "oc_get",
   "arguments": {
     "resourceType": "pods",
     "namespace": "my-project"
@@ -76,6 +80,7 @@ Add the server to your Claude Desktop configuration file (`~/.claude/mcp.json`):
 ```
 
 ### Create a new project
+
 ```json
 {
   "name": "oc_create",
@@ -89,6 +94,7 @@ Add the server to your Claude Desktop configuration file (`~/.claude/mcp.json`):
 ```
 
 ### Scale a deployment config
+
 ```json
 {
   "name": "oc_scale",
@@ -101,6 +107,7 @@ Add the server to your Claude Desktop configuration file (`~/.claude/mcp.json`):
 ```
 
 ### Get application logs
+
 ```json
 {
   "name": "oc_logs",
@@ -136,6 +143,7 @@ Add the server to your Claude Desktop configuration file (`~/.claude/mcp.json`):
 ### Debug Mode
 
 Run the server with debug output:
+
 ```bash
 DEBUG=* npm start
 ```
@@ -143,6 +151,7 @@ DEBUG=* npm start
 ### Testing CLI Commands
 
 Test OpenShift commands directly:
+
 ```bash
 # Test basic connectivity
 oc whoami

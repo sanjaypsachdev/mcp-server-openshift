@@ -6,7 +6,8 @@ import { existsSync } from 'fs';
 
 export const ocExposeTool: Tool = {
   name: 'oc_expose',
-  description: 'Expose an OpenShift resource (service, deployment, etc.) with secure route endpoints supporting SSL/TLS termination',
+  description:
+    'Expose an OpenShift resource (service, deployment, etc.) with secure route endpoints supporting SSL/TLS termination',
   inputSchema: {
     type: 'object',
     properties: {
@@ -49,7 +50,8 @@ export const ocExposeTool: Tool = {
         type: 'string',
         enum: ['edge', 'passthrough', 'reencrypt'],
         default: 'edge',
-        description: 'Type of secure route: edge (SSL termination at router), passthrough (SSL passthrough), reencrypt (SSL re-encryption)',
+        description:
+          'Type of secure route: edge (SSL termination at router), passthrough (SSL passthrough), reencrypt (SSL re-encryption)',
       },
       wildcardPolicy: {
         type: 'string',
@@ -82,7 +84,8 @@ export const ocExposeTool: Tool = {
         type: 'string',
         enum: ['None', 'Allow', 'Redirect'],
         default: 'Redirect',
-        description: 'Policy for insecure traffic: None (reject), Allow (allow), Redirect (redirect to secure)',
+        description:
+          'Policy for insecure traffic: None (reject), Allow (allow), Redirect (redirect to secure)',
       },
       labels: {
         type: 'array',
@@ -129,17 +132,22 @@ export async function handleOcExpose(params: OcExposeParams) {
 
     // Use tlsTermination as fallback for routeType if provided
     const routeType = validated.routeType || validated.tlsTermination || 'edge';
-    
+
     // Generate route name if not provided
     const routeName = validated.routeName || `${validated.name}-route`;
-    
+
     addProgress(`📝 Resource: ${validated.resourceType}/${validated.name}`);
     addProgress(`🌐 Route name: ${routeName}`);
     addProgress(`🔒 Route type: ${routeType}`);
     addProgress(`📂 Namespace: ${validated.namespace}`);
 
     // Validate TLS certificates if provided (before resource verification)
-    if (validated.certificate || validated.key || validated.caCertificate || validated.destinationCaCertificate) {
+    if (
+      validated.certificate ||
+      validated.key ||
+      validated.caCertificate ||
+      validated.destinationCaCertificate
+    ) {
       addProgress(`🔐 Validating TLS certificates...`);
       const certValidation = validateTLSCertificates(validated);
       if (!certValidation.valid) {
@@ -165,13 +173,12 @@ export async function handleOcExpose(params: OcExposeParams) {
 
     if (!resourceCheck.success) {
       addProgress(`❌ Source resource verification failed: ${resourceCheck.error}`, 'ERROR');
-      return formatErrorResponse(
-        progressLog,
-        'Source resource not found',
-        resourceCheck.error
-      );
+      return formatErrorResponse(progressLog, 'Source resource not found', resourceCheck.error);
     }
-    addProgress(`✅ Source resource verified: ${validated.resourceType}/${validated.name}`, 'SUCCESS');
+    addProgress(
+      `✅ Source resource verified: ${validated.resourceType}/${validated.name}`,
+      'SUCCESS'
+    );
 
     // Get resource details for port detection if needed
     let targetPort = validated.port;
@@ -192,7 +199,6 @@ export async function handleOcExpose(params: OcExposeParams) {
         addProgress(`⚠️  Could not auto-detect port: ${portInfo.warning}`, 'WARNING');
       }
     }
-
 
     // Create the route
     addProgress(`🛣️  Creating ${routeType} route...`);
@@ -217,7 +223,14 @@ export async function handleOcExpose(params: OcExposeParams) {
     const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
     addProgress(`🎉 Resource exposure completed in ${totalTime}s`, 'SUCCESS');
 
-    return formatSuccessResponse(progressLog, validated, routeName, routeType, routeInfo, targetPort);
+    return formatSuccessResponse(
+      progressLog,
+      validated,
+      routeName,
+      routeType,
+      routeInfo,
+      targetPort
+    );
   } catch (error) {
     addProgress(
       `💥 Unexpected error: ${error instanceof Error ? error.message : String(error)}`,
@@ -241,9 +254,9 @@ async function verifyResourceExists(
   try {
     const result = await manager.getResources(resourceType, namespace, name, {
       context,
-      output: 'json'
+      output: 'json',
     });
-    
+
     if (result.success) {
       return { success: true, data: result.data };
     } else {
@@ -252,7 +265,7 @@ async function verifyResourceExists(
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     };
   }
 }
@@ -267,12 +280,12 @@ async function detectTargetPort(
 ): Promise<{ port?: string; warning?: string }> {
   try {
     let resource = resourceData;
-    
+
     // If resource data wasn't provided, fetch it
     if (!resource) {
       const result = await manager.getResources(resourceType, namespace, name, {
         context,
-        output: 'json'
+        output: 'json',
       });
 
       if (!result.success) {
@@ -301,7 +314,9 @@ async function detectTargetPort(
 
     return { warning: 'No ports found in resource specification' };
   } catch (error) {
-    return { warning: `Port detection failed: ${error instanceof Error ? error.message : String(error)}` };
+    return {
+      warning: `Port detection failed: ${error instanceof Error ? error.message : String(error)}`,
+    };
   }
 }
 
@@ -321,17 +336,19 @@ function validateTLSCertificates(params: OcExposeParams): { valid: boolean; erro
     }
 
     if (params.destinationCaCertificate && !existsSync(params.destinationCaCertificate)) {
-      return { valid: false, error: `Destination CA certificate file not found: ${params.destinationCaCertificate}` };
+      return {
+        valid: false,
+        error: `Destination CA certificate file not found: ${params.destinationCaCertificate}`,
+      };
     }
 
     // Validate certificate and key are provided together for edge and reencrypt
     const routeType = params.routeType || params.tlsTermination || 'edge';
-    if ((routeType === 'edge' || routeType === 'reencrypt') && 
-        (params.certificate || params.key)) {
+    if ((routeType === 'edge' || routeType === 'reencrypt') && (params.certificate || params.key)) {
       if (!params.certificate || !params.key) {
-        return { 
-          valid: false, 
-          error: `Both certificate and private key are required for ${routeType} termination` 
+        return {
+          valid: false,
+          error: `Both certificate and private key are required for ${routeType} termination`,
         };
       }
     }
@@ -343,9 +360,9 @@ function validateTLSCertificates(params: OcExposeParams): { valid: boolean; erro
 
     return { valid: true };
   } catch (error) {
-    return { 
-      valid: false, 
-      error: `Certificate validation error: ${error instanceof Error ? error.message : String(error)}` 
+    return {
+      valid: false,
+      error: `Certificate validation error: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
 }
@@ -387,7 +404,10 @@ async function createSecureRoute(
     }
 
     // Add insecure edge termination policy
-    if (params.insecureEdgeTerminationPolicy && params.insecureEdgeTerminationPolicy !== 'Redirect') {
+    if (
+      params.insecureEdgeTerminationPolicy &&
+      params.insecureEdgeTerminationPolicy !== 'Redirect'
+    ) {
       args.push('--insecure-policy', params.insecureEdgeTerminationPolicy);
     }
 
@@ -433,7 +453,7 @@ async function createSecureRoute(
       params.annotations.forEach(annotation => {
         annotateArgs.push(annotation);
       });
-      
+
       await manager.executeCommand(annotateArgs, { context: params.context });
     }
 
@@ -441,7 +461,7 @@ async function createSecureRoute(
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
     };
   }
 }
@@ -455,7 +475,7 @@ async function getRouteInformation(
   try {
     const result = await manager.getResources('route', namespace, routeName, {
       context,
-      output: 'json'
+      output: 'json',
     });
 
     if (result.success) {
@@ -469,7 +489,7 @@ async function getRouteInformation(
         to: route.spec?.to,
         port: route.spec?.port,
         status: route.status,
-        url: `https://${route.spec?.host}${route.spec?.path || ''}`
+        url: `https://${route.spec?.host}${route.spec?.path || ''}`,
       };
     }
     return null;
@@ -506,7 +526,9 @@ function formatSuccessResponse(
     response.push(`- **Path**: ${routeInfo.path}`);
     if (routeInfo.tls) {
       response.push(`- **TLS Termination**: ${routeInfo.tls.termination}`);
-      response.push(`- **Insecure Policy**: ${routeInfo.tls.insecureEdgeTerminationPolicy || 'Redirect'}`);
+      response.push(
+        `- **Insecure Policy**: ${routeInfo.tls.insecureEdgeTerminationPolicy || 'Redirect'}`
+      );
     }
     response.push(``);
   }
@@ -541,7 +563,9 @@ function formatSuccessResponse(
     const routeUrl = `https://${routeInfo.host}${routeInfo.path || ''}`;
     response.push(`curl -k ${routeUrl}`);
   } else {
-    response.push(`# Get the route URL first: oc get route ${routeName} -n ${params.namespace} -o jsonpath='{.spec.host}'`);
+    response.push(
+      `# Get the route URL first: oc get route ${routeName} -n ${params.namespace} -o jsonpath='{.spec.host}'`
+    );
   }
   response.push(``);
   response.push(`# Delete the route`);
@@ -576,7 +600,9 @@ function formatErrorResponse(progressLog: string[], errorTitle: string, errorDet
   response.push(``);
   response.push(`## 🔧 Troubleshooting Steps`);
   response.push(`1. Check the progress log above for specific error details`);
-  response.push(`2. Verify the source resource exists: \`oc get <resource-type> <name> -n <namespace>\``);
+  response.push(
+    `2. Verify the source resource exists: \`oc get <resource-type> <name> -n <namespace>\``
+  );
   response.push(`3. Check namespace permissions: \`oc auth can-i create routes -n <namespace>\``);
   response.push(`4. Verify TLS certificate files are readable and valid`);
   response.push(`5. Check if a route with the same name already exists`);

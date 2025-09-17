@@ -4,7 +4,7 @@ services:
   mcp-server-openshift:
     build: .
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       - MCP_TRANSPORT=sse
       - MCP_PORT=3000
@@ -16,22 +16,22 @@ services:
       - ${HOME}/.kube:/home/nodejs/.kube:ro
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      test: ['CMD', 'curl', '-f', 'http://localhost:3000/health']
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
     labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.mcp-openshift.rule=Host(`mcp-openshift.local`)"
-      - "traefik.http.services.mcp-openshift.loadbalancer.server.port=3000"
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.mcp-openshift.rule=Host(`mcp-openshift.local`)'
+      - 'traefik.http.services.mcp-openshift.loadbalancer.server.port=3000'
 
   # Optional: Add a reverse proxy for production deployment
   nginx:
     image: nginx:alpine
     ports:
-      - "80:80"
-      - "443:443"
+      - '80:80'
+      - '443:443'
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./ssl:/etc/nginx/ssl:ro
