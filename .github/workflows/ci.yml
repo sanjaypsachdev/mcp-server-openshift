@@ -7,6 +7,13 @@ on:
   push:
     branches: [main]
 
+# Set permissions for the workflow
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  checks: write
+
 env:
   NODE_VERSION: '18'
   CACHE_KEY_PREFIX: 'node-cache-v1'
@@ -375,36 +382,61 @@ jobs:
 
           echo "✅ All critical pipeline stages passed successfully"
 
+      - name: Generate Pipeline Summary
+        run: |
+          echo "## 📊 CI Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Stage | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Code Quality | ${{ needs.code-quality.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Tests | ${{ needs.test.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Build | ${{ needs.build.result == 'success' && '✅ Passed' || '❌ Failed' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Integration Tests | ${{ needs.integration-test.result == 'success' && '✅ Passed' || needs.integration-test.result == 'failure' && '❌ Failed' || '⏭️ Skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security | ${{ needs.security.result == 'success' && '✅ Passed' || needs.security.result == 'failure' && '❌ Failed' || '⏭️ Skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Documentation | ${{ needs.documentation.result == 'success' && '✅ Passed' || needs.documentation.result == 'failure' && '❌ Failed' || '⏭️ Skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Performance | ${{ needs.performance.result == 'success' && '✅ Passed' || needs.performance.result == 'failure' && '❌ Failed' || '⏭️ Skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Critical Jobs Status" >> $GITHUB_STEP_SUMMARY
+          echo "All critical pipeline stages (Code Quality, Tests, Build) must pass for the workflow to succeed." >> $GITHUB_STEP_SUMMARY
+
       - name: PR Status Comment
         if: github.event_name == 'pull_request'
         uses: actions/github-script@v8
+        continue-on-error: true
         with:
           script: |
-            const jobs = [
-              { name: 'Code Quality', status: '${{ needs.code-quality.result }}' },
-              { name: 'Tests', status: '${{ needs.test.result }}' },
-              { name: 'Build', status: '${{ needs.build.result }}' },
-              { name: 'Integration Tests', status: '${{ needs.integration-test.result }}' },
-              { name: 'Security', status: '${{ needs.security.result }}' },
-              { name: 'Documentation', status: '${{ needs.documentation.result }}' },
-              { name: 'Performance', status: '${{ needs.performance.result }}' }
-            ];
+            try {
+              const jobs = [
+                { name: 'Code Quality', status: '${{ needs.code-quality.result }}' },
+                { name: 'Tests', status: '${{ needs.test.result }}' },
+                { name: 'Build', status: '${{ needs.build.result }}' },
+                { name: 'Integration Tests', status: '${{ needs.integration-test.result }}' },
+                { name: 'Security', status: '${{ needs.security.result }}' },
+                { name: 'Documentation', status: '${{ needs.documentation.result }}' },
+                { name: 'Performance', status: '${{ needs.performance.result }}' }
+              ];
 
-            const passed = jobs.filter(j => j.status === 'success').length;
-            const failed = jobs.filter(j => j.status === 'failure').length;
-            const skipped = jobs.filter(j => j.status === 'skipped').length;
+              const passed = jobs.filter(j => j.status === 'success').length;
+              const failed = jobs.filter(j => j.status === 'failure').length;
+              const skipped = jobs.filter(j => j.status === 'skipped').length;
 
-            const statusEmoji = failed === 0 ? '✅' : '❌';
-            const summary = `${statusEmoji} **CI Pipeline Results**\n\n` +
-              `- ✅ Passed: ${passed}\n` +
-              `- ❌ Failed: ${failed}\n` +
-              `- ⏭️ Skipped: ${skipped}\n\n` +
-              `**Job Details:**\n` +
-              jobs.map(j => `- ${j.status === 'success' ? '✅' : j.status === 'failure' ? '❌' : '⏭️'} ${j.name}`).join('\n');
+              const statusEmoji = failed === 0 ? '✅' : '❌';
+              const summary = `${statusEmoji} **CI Pipeline Results**\n\n` +
+                `- ✅ Passed: ${passed}\n` +
+                `- ❌ Failed: ${failed}\n` +
+                `- ⏭️ Skipped: ${skipped}\n\n` +
+                `**Job Details:**\n` +
+                jobs.map(j => `- ${j.status === 'success' ? '✅' : j.status === 'failure' ? '❌' : '⏭️'} ${j.name}`).join('\n');
 
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: summary
-            });
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: summary
+              });
+
+              console.log('✅ Successfully posted CI pipeline results comment');
+            } catch (error) {
+              console.log('⚠️ Failed to post PR comment:', error.message);
+              console.log('This is not critical - the pipeline validation completed successfully');
+            }
