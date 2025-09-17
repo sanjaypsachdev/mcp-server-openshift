@@ -27,6 +27,7 @@ import { ocPatchTool, handleOcPatch } from './tools/oc-patch.js';
 import { ocLoginTool, handleOcLogin } from './tools/oc-login.js';
 import { ocApiResourcesTool, handleOcApiResources } from './tools/oc-api-resources.js';
 import { ocExplainTool, handleOcExplain } from './tools/oc-explain.js';
+import { ocExposeTool, handleOcExpose } from './tools/oc-expose.js';
 import { OpenShiftManager } from './utils/openshift-manager.js';
 
 // Import resources
@@ -93,6 +94,7 @@ class OpenShiftMCPServer {
           ocLoginTool,
           ocApiResourcesTool,
           ocExplainTool,
+          ocExposeTool,
           // Add more tools here as they are implemented
         ],
       };
@@ -142,6 +144,9 @@ class OpenShiftMCPServer {
 
           case 'oc_explain':
             return await handleOcExplain(args as any);
+
+          case 'oc_expose':
+            return await handleOcExpose(args as any);
 
           default:
             throw new Error(`Unknown tool: ${name}`);

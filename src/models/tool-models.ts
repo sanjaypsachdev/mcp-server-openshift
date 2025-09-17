@@ -204,13 +204,43 @@ export const OcStartBuildSchema = z.object({
 });
 
 export const OcExposeSchema = z.object({
-  resourceType: z.string().describe('Resource type to expose (service, deploymentconfig)'),
+  resourceType: z
+    .enum(['service', 'svc', 'deploymentconfig', 'dc', 'deployment', 'deploy'])
+    .describe('Resource type to expose (service, deploymentconfig, deployment)'),
   name: z.string().describe('Name of the resource to expose'),
   namespace: NamespaceSchema.describe('OpenShift namespace/project'),
   context: ContextSchema.describe('OpenShift context to use (optional)'),
-  hostname: z.string().optional().describe('Hostname for the route'),
-  port: z.string().optional().describe('Port to expose'),
-  path: z.string().optional().describe('Path for the route'),
+  routeName: z.string().optional().describe('Name for the route (if not specified, derives from resource name)'),
+  hostname: z.string().optional().describe('Custom hostname for the route'),
+  port: z.string().optional().describe('Target port to expose (port name or number)'),
+  path: z.string().optional().describe('Path for the route (e.g., /api)'),
+  routeType: z
+    .enum(['edge', 'passthrough', 'reencrypt'])
+    .optional()
+    .default('edge')
+    .describe('Type of secure route: edge (SSL termination at router), passthrough (SSL passthrough), reencrypt (SSL re-encryption)'),
+  wildcardPolicy: z
+    .enum(['None', 'Subdomain'])
+    .optional()
+    .default('None')
+    .describe('Wildcard policy for the route'),
+  tlsTermination: z
+    .enum(['edge', 'passthrough', 'reencrypt'])
+    .optional()
+    .describe('TLS termination type (deprecated, use routeType instead)'),
+  certificate: z.string().optional().describe('Path to TLS certificate file'),
+  key: z.string().optional().describe('Path to TLS private key file'),
+  caCertificate: z.string().optional().describe('Path to CA certificate file'),
+  destinationCaCertificate: z.string().optional().describe('Path to destination CA certificate file (for reencrypt)'),
+  insecureEdgeTerminationPolicy: z
+    .enum(['None', 'Allow', 'Redirect'])
+    .optional()
+    .default('Redirect')
+    .describe('Policy for insecure traffic: None (reject), Allow (allow), Redirect (redirect to secure)'),
+  labels: z.array(z.string()).optional().describe('Labels to apply to the route in KEY=VALUE format'),
+  annotations: z.array(z.string()).optional().describe('Annotations to apply to the route in KEY=VALUE format'),
+  weight: z.number().min(0).max(256).optional().describe('Weight for this route (0-256)'),
+  dryRun: z.boolean().optional().default(false).describe('Show what would be created without actually creating it'),
 });
 
 export const OcInstallOperatorSchema = z.object({
