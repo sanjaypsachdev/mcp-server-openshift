@@ -1,0 +1,55 @@
+# Source files
+src/
+tests/
+coverage/
+
+# Development files
+.github/
+docs/
+*.log
+*.tgz
+
+# Configuration files
+.eslintrc*
+eslint.config.js
+vitest.config.ts
+tsconfig.json
+.prettierrc
+.gitignore
+
+# Development dependencies
+node_modules/
+.npm/
+.node_repl_history
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker files (keep Dockerfile for reference)
+docker-compose.yml
+.dockerignore
+
+# Backup files
+*.backup
+*.bak
+
+# Test files
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
+
+# Build artifacts we don't need in npm package
+*.tsbuildinfo
+dist/.tsbuildinfo
+
+# Backup files
+README.md.backup

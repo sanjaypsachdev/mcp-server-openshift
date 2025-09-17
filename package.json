@@ -1,8 +1,11 @@
 {
   "name": "mcp-server-openshift",
-  "version": "1.0.0",
-  "description": "MCP server for OpenShift operations and management",
+  "version": "1.1.0",
+  "description": "MCP server for OpenShift operations and management with comprehensive tools for cluster management, application deployment, and secure route creation",
   "main": "dist/index.js",
+  "bin": {
+    "mcp-server-openshift": "dist/index.js"
+  },
   "type": "module",
   "scripts": {
     "build": "tsc",
@@ -18,7 +21,11 @@
     "lint": "eslint src --ext .ts,.tsx",
     "lint:fix": "eslint src --ext .ts,.tsx --fix",
     "clean": "rm -rf dist",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run clean && npm run build && npm test",
+    "prepack": "npm run build",
+    "version": "npm run build && git add -A dist",
+    "postversion": "git push && git push --tags"
   },
   "keywords": [
     "mcp",
@@ -26,10 +33,34 @@
     "kubernetes",
     "container",
     "orchestration",
-    "devops"
+    "devops",
+    "model-context-protocol",
+    "ai-assistant",
+    "cluster-management",
+    "cloud-native",
+    "redhat",
+    "oc-cli"
   ],
-  "author": "MCP OpenShift Server",
+  "author": {
+    "name": "Sanjay Sachdev",
+    "email": "sanjaypsachdev@gmail.com",
+    "url": "https://github.com/sanjaypsachdev"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sanjaypsachdev/mcp-server-openshift.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sanjaypsachdev/mcp-server-openshift/issues"
+  },
+  "homepage": "https://github.com/sanjaypsachdev/mcp-server-openshift#readme",
+  "files": [
+    "dist/",
+    "manifest.json",
+    "README.md",
+    "LICENSE"
+  ],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^0.7.0",
     "@types/js-yaml": "^4.0.9",
