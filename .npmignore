@@ -49,7 +49,9 @@ docker-compose.yml
 
 # Build artifacts we don't need in npm package
 *.tsbuildinfo
-dist/.tsbuildinfo
+**/*.tsbuildinfo
+.tsbuildinfo
 
 # Backup files
+*.backup
 README.md.backup
