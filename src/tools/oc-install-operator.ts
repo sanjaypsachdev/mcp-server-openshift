@@ -2,6 +2,8 @@ import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { OcInstallOperatorSchema, type OcInstallOperatorParams } from '../models/tool-models.js';
 import { OpenShiftManager } from '../utils/openshift-manager.js';
 import { handleOcApply } from './oc-apply.js';
+import { validateResourceName, validateNamespace } from '../utils/validation-helpers.js';
+import yaml from 'js-yaml';
 
 export const ocInstallOperatorTool: Tool = {
   name: 'oc_install_operator',
@@ -141,6 +143,41 @@ async function createNamespaceIfNotExists(
 
 async function installOperatorViaOLM(manager: OpenShiftManager, params: OcInstallOperatorParams) {
   try {
+    // Validate user-controlled fields before they are used in YAML construction.
+    // operatorName and namespace must be DNS-1123 labels (no newlines, YAML metacharacters, etc.).
+    const nameValidation = validateResourceName(params.operatorName);
+    if (!nameValidation.valid) {
+      return {
+        content: [{ type: 'text' as const, text: `Error: Invalid operatorName: ${nameValidation.error}` }],
+        isError: true,
+      };
+    }
+    const nsValidation = validateNamespace(params.namespace);
+    if (!nsValidation.valid) {
+      return {
+        content: [{ type: 'text' as const, text: `Error: Invalid namespace: ${nsValidation.error}` }],
+        isError: true,
+      };
+    }
+    if (params.channel !== undefined) {
+      const channelValidation = validateOLMChannel(params.channel);
+      if (!channelValidation.valid) {
+        return {
+          content: [{ type: 'text' as const, text: `Error: Invalid channel: ${channelValidation.error}` }],
+          isError: true,
+        };
+      }
+    }
+    if (params.version !== undefined) {
+      const versionValidation = validateOperatorVersion(params.version);
+      if (!versionValidation.valid) {
+        return {
+          content: [{ type: 'text' as const, text: `Error: Invalid version: ${versionValidation.error}` }],
+          isError: true,
+        };
+      }
+    }
+
     // First, check if OLM is available
     const olmCheck = await manager.executeCommand(
       ['get', 'crd', 'subscriptions.operators.coreos.com'],
@@ -167,15 +204,20 @@ async function installOperatorViaOLM(manager: OpenShiftManager, params: OcInstal
     const catalogSource = 'redhat-operators'; // Default for Red Hat operators
     const catalogSourceNamespace = 'openshift-marketplace';
 
-    // Create OperatorGroup using oc apply tool
-    const operatorGroupYaml = `apiVersion: operators.coreos.com/v1
-kind: OperatorGroup
-metadata:
-  name: ${params.operatorName}-operator-group
-  namespace: ${params.namespace}
-spec:
-  targetNamespaces:
-  - ${params.namespace}`;
+    // Build manifests as plain objects and serialize with js-yaml so that any
+    // special characters in user-supplied values are safely quoted — no injection possible.
+    const operatorGroupDoc = {
+      apiVersion: 'operators.coreos.com/v1',
+      kind: 'OperatorGroup',
+      metadata: {
+        name: `${packageName}-operator-group`,
+        namespace: params.namespace,
+      },
+      spec: {
+        targetNamespaces: [params.namespace],
+      },
+    };
+    const operatorGroupYaml = yaml.dump(operatorGroupDoc, { noRefs: true });
 
     const ogResult = await handleOcApply({
       manifest: operatorGroupYaml,
@@ -207,23 +249,27 @@ spec:
       };
     }
 
-    // Create Subscription using oc apply tool
-    const subscriptionYaml = `apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: ${params.operatorName}-subscription
-  namespace: ${params.namespace}
-spec:
-  channel: ${defaultChannel}
-  name: ${packageName}
-  source: ${catalogSource}
-  sourceNamespace: ${catalogSourceNamespace}
-  installPlanApproval: ${params.installPlanApproval}${
-    params.version
-      ? `
-  startingCSV: ${packageName}.v${params.version}`
-      : ''
-  }`;
+    const subscriptionSpec: Record<string, string> = {
+      channel: defaultChannel,
+      name: packageName,
+      source: catalogSource,
+      sourceNamespace: catalogSourceNamespace,
+      installPlanApproval: params.installPlanApproval || 'Automatic',
+    };
+    if (params.version) {
+      subscriptionSpec.startingCSV = `${packageName}.v${params.version}`;
+    }
+
+    const subscriptionDoc = {
+      apiVersion: 'operators.coreos.com/v1alpha1',
+      kind: 'Subscription',
+      metadata: {
+        name: `${packageName}-subscription`,
+        namespace: params.namespace,
+      },
+      spec: subscriptionSpec,
+    };
+    const subscriptionYaml = yaml.dump(subscriptionDoc, { noRefs: true });
 
     const subResult = await handleOcApply({
       manifest: subscriptionYaml,
@@ -450,6 +496,40 @@ async function installOperatorViaManifest(
       ],
     };
   }
+}
+
+// OLM channel names: lowercase alphanumeric, hyphens, dots (e.g. "stable", "stable-v0.8", "fast-4.13")
+function validateOLMChannel(channel: string): { valid: boolean; error?: string } {
+  if (!channel || typeof channel !== 'string') {
+    return { valid: false, error: 'Channel must be a non-empty string' };
+  }
+  if (!/^[a-z0-9][a-z0-9._-]*$/.test(channel)) {
+    return {
+      valid: false,
+      error: 'Channel must consist of lowercase alphanumeric characters, hyphens, dots, or underscores',
+    };
+  }
+  if (channel.length > 253) {
+    return { valid: false, error: 'Channel name must be 253 characters or less' };
+  }
+  return { valid: true };
+}
+
+// Operator versions follow semver-like patterns (e.g. "1.2.3", "0.8.1-alpha.1")
+function validateOperatorVersion(version: string): { valid: boolean; error?: string } {
+  if (!version || typeof version !== 'string') {
+    return { valid: false, error: 'Version must be a non-empty string' };
+  }
+  if (!/^[0-9][a-zA-Z0-9._-]*$/.test(version)) {
+    return {
+      valid: false,
+      error: 'Version must start with a digit and contain only alphanumeric characters, dots, hyphens, or underscores',
+    };
+  }
+  if (version.length > 128) {
+    return { valid: false, error: 'Version must be 128 characters or less' };
+  }
+  return { valid: true };
 }
 
 function isValidManifestUrl(url: string): boolean {
