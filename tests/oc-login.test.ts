@@ -188,6 +188,52 @@ describe('oc-login tool', () => {
         expect(result.content[0].text).toContain('Invalid Server URL');
       });
 
+      it('should reject IPv4-mapped IPv6 addresses (blocklist bypass)', async () => {
+        const args: OcLoginArgs = {
+          server: 'https://[::ffff:169.254.169.254]:6443',
+          authMethod: 'token',
+          token: 'valid-token-12345',
+        };
+
+        const result = await handleOcLogin(args);
+
+        expect(result.isError).toBe(true);
+        expect(result.content[0].text).toContain('Invalid Server URL');
+      });
+
+      it('should reject arbitrary external hostnames not matching OpenShift patterns', async () => {
+        const args: OcLoginArgs = {
+          server: 'https://credential-harvester.attacker.io:6443',
+          authMethod: 'token',
+          token: 'valid-token-12345',
+        };
+
+        const result = await handleOcLogin(args);
+
+        expect(result.isError).toBe(true);
+        expect(result.content[0].text).toContain('Invalid Server URL');
+      });
+
+      it('should allow custom server when OPENSHIFT_ALLOWED_SERVERS env var is set', async () => {
+        process.env.OPENSHIFT_ALLOWED_SERVERS = 'https://custom-cluster.corp.internal:6443';
+
+        const args: OcLoginArgs = {
+          server: 'https://custom-cluster.corp.internal:6443',
+          authMethod: 'token',
+          token: 'valid-token-12345',
+        };
+
+        mockManager.executeCommand
+          .mockResolvedValueOnce({ success: true, data: 'Login successful' })
+          .mockResolvedValueOnce({ success: true, data: 'test-user' })
+          .mockResolvedValueOnce({ success: true, data: 'test-context' });
+
+        const result = await handleOcLogin(args);
+
+        delete process.env.OPENSHIFT_ALLOWED_SERVERS;
+        expect(result.isError).toBeFalsy();
+      });
+
       it('should accept valid OpenShift server URLs', async () => {
         const validUrls = [
           'https://api.cluster.example.com:6443',

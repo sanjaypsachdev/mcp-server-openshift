@@ -100,7 +100,7 @@ export async function handleOcLogin(args: OcLoginArgs) {
         content: [
           {
             type: 'text' as const,
-            text: `❌ **Invalid Server URL**\n\nServer URL must be a valid HTTPS URL to an OpenShift API server.\n\n**Security Requirements**:\n- Must use HTTPS protocol\n- Must not be a private/local IP address\n- Must be a properly formatted URL\n\n**Example**: \`https://api.cluster.example.com:6443\``,
+            text: `❌ **Invalid Server URL**\n\nServer URL must be a valid HTTPS URL to a recognised OpenShift API server hostname.\n\n**Security Requirements**:\n- Must use HTTPS protocol\n- Must not be a private, loopback, or link-local IP address\n- Hostname must match a known OpenShift pattern (api.*, *.openshift.*, *.k8s.*, etc.)\n\n**Examples**:\n- \`https://api.cluster.example.com:6443\`\n- \`https://openshift.corp.example.com:6443\`\n\n**Custom hostname**: Set the \`OPENSHIFT_ALLOWED_SERVERS\` environment variable to a comma-separated list of allowed server URL prefixes.`,
           },
         ],
         isError: true,
@@ -251,36 +251,63 @@ function isValidServerUrl(server: string): boolean {
       return false;
     }
 
-    // Block private IP ranges and localhost for security
     const hostname = url.hostname.toLowerCase();
+
+    // Block localhost and well-known metadata endpoints by exact name
     const blockedHosts = [
       'localhost',
       '127.0.0.1',
       '0.0.0.0',
       '::1',
       'metadata.google.internal',
-      '169.254.169.254', // AWS metadata
+      '169.254.169.254', // AWS/Azure instance metadata
     ];
-
     if (blockedHosts.some(blocked => hostname === blocked || hostname.endsWith('.' + blocked))) {
       return false;
     }
 
-    // Block private IP ranges
-    if (hostname.match(/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|127\.)/)) {
+    // Block IPv4 private and loopback ranges
+    if (/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|127\.)/.test(hostname)) {
       return false;
     }
 
-    // Common OpenShift API server patterns
+    // Block IPv4-mapped IPv6 (e.g. ::ffff:169.254.169.254 bypasses the IPv4 checks above)
+    if (/^::ffff:/i.test(hostname)) {
+      return false;
+    }
+
+    // Block IPv6 loopback (::1 already in blockedHosts), link-local (fe80::/10),
+    // and unique-local (fc00::/7 covers fc:: and fd::)
+    if (/^fe[89ab][0-9a-f]:/i.test(hostname) || /^f[cd][0-9a-f]{2}:/i.test(hostname)) {
+      return false;
+    }
+
+    // Support custom deployments: if OPENSHIFT_ALLOWED_SERVERS is set, check against
+    // its comma-separated list of allowed server URL prefixes before the pattern check.
+    const allowedServers = process.env.OPENSHIFT_ALLOWED_SERVERS;
+    if (allowedServers) {
+      const allowed = allowedServers
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+      return allowed.some(s => server.startsWith(s));
+    }
+
+    // Require the hostname to match a known OpenShift API server pattern.
+    // This is an allowlist: anything not matching is rejected rather than accepted.
+    // For custom hostnames that don't fit these patterns, set OPENSHIFT_ALLOWED_SERVERS.
     const validPatterns = [
-      /^api\./, // api.cluster.example.com
+      /^api\./, // api.cluster.example.com  (standard OCP install)
+      /^openshift\./, // openshift.corp.example.com  (common on-prem convention)
       /\.openshift\./, // cluster.openshift.example.com
       /\.k8s\./, // cluster.k8s.example.com
       /\.ocp\./, // cluster.ocp.example.com
+      /\.rosa\./, // cluster.rosa.example.com  (ROSA)
+      /\.openshiftapps\.com$/, // *.openshiftapps.com  (OpenShift Dedicated / ROSA)
+      /\.redhat\.com$/, // *.redhat.com  (Red Hat hosted services)
     ];
 
-    // Allow if matches common patterns or is a valid FQDN
-    return validPatterns.some(pattern => pattern.test(hostname)) || hostname.includes('.');
+    return validPatterns.some(pattern => pattern.test(hostname));
   } catch {
     return false;
   }
