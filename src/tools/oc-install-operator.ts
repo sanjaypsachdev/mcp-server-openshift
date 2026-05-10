@@ -364,6 +364,21 @@ async function installOperatorViaHelm(manager: OpenShiftManager, params: OcInsta
     };
   }
 
+  // Validate the Helm repository URL before passing it to helm repo add.
+  // installOperatorViaManifest already validates its URL; this closes the same
+  // gap for the Helm path.
+  if (!isValidHelmRepoUrl(params.helmRepo)) {
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: 'Error: Invalid Helm repository URL. Only HTTPS URLs to non-private, non-internal hosts are allowed.',
+        },
+      ],
+      isError: true,
+    };
+  }
+
   try {
     // Add Helm repository
     const addRepoResult = await manager.executeCommand(
@@ -530,6 +545,59 @@ function validateOperatorVersion(version: string): { valid: boolean; error?: str
     return { valid: false, error: 'Version must be 128 characters or less' };
   }
   return { valid: true };
+}
+
+// Helm repository URLs commonly sit at the root path (e.g. https://charts.example.com/),
+// so the pathname check from isValidManifestUrl is intentionally omitted here.
+function isValidHelmRepoUrl(url: string): boolean {
+  try {
+    if (!url || typeof url !== 'string' || url.trim().length === 0) {
+      return false;
+    }
+
+    const parsedUrl = new URL(url.trim());
+
+    if (parsedUrl.protocol !== 'https:') {
+      return false;
+    }
+
+    if (!parsedUrl.hostname || parsedUrl.hostname.length === 0) {
+      return false;
+    }
+
+    const hostname = parsedUrl.hostname.toLowerCase();
+
+    const blockedHosts = [
+      'localhost',
+      '127.0.0.1',
+      '0.0.0.0',
+      '::1',
+      'metadata.google.internal',
+      '169.254.169.254',
+    ];
+    if (blockedHosts.some(blocked => hostname === blocked || hostname.endsWith('.' + blocked))) {
+      return false;
+    }
+
+    // Block IPv4 private and loopback ranges
+    if (/^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[0-1])\.|127\.)/.test(hostname)) {
+      return false;
+    }
+
+    // Block IPv4-mapped IPv6 (e.g. ::ffff:10.0.0.1 bypasses the IPv4 check above)
+    if (/^::ffff:/i.test(hostname)) {
+      return false;
+    }
+
+    // Block IPv6 link-local (fe80::/10) and unique-local (fc00::/7)
+    if (/^fe[89ab][0-9a-f]:/i.test(hostname) || /^f[cd][0-9a-f]{2}:/i.test(hostname)) {
+      return false;
+    }
+
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function isValidManifestUrl(url: string): boolean {
