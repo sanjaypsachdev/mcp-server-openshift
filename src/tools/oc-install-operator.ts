@@ -148,14 +148,24 @@ async function installOperatorViaOLM(manager: OpenShiftManager, params: OcInstal
     const nameValidation = validateResourceName(params.operatorName);
     if (!nameValidation.valid) {
       return {
-        content: [{ type: 'text' as const, text: `Error: Invalid operatorName: ${nameValidation.error}` }],
+        content: [
+          {
+            type: 'text' as const,
+            text: `Error: Invalid operatorName: ${nameValidation.error}`,
+          },
+        ],
         isError: true,
       };
     }
     const nsValidation = validateNamespace(params.namespace);
     if (!nsValidation.valid) {
       return {
-        content: [{ type: 'text' as const, text: `Error: Invalid namespace: ${nsValidation.error}` }],
+        content: [
+          {
+            type: 'text' as const,
+            text: `Error: Invalid namespace: ${nsValidation.error}`,
+          },
+        ],
         isError: true,
       };
     }
@@ -163,7 +173,12 @@ async function installOperatorViaOLM(manager: OpenShiftManager, params: OcInstal
       const channelValidation = validateOLMChannel(params.channel);
       if (!channelValidation.valid) {
         return {
-          content: [{ type: 'text' as const, text: `Error: Invalid channel: ${channelValidation.error}` }],
+          content: [
+            {
+              type: 'text' as const,
+              text: `Error: Invalid channel: ${channelValidation.error}`,
+            },
+          ],
           isError: true,
         };
       }
@@ -172,7 +187,12 @@ async function installOperatorViaOLM(manager: OpenShiftManager, params: OcInstal
       const versionValidation = validateOperatorVersion(params.version);
       if (!versionValidation.valid) {
         return {
-          content: [{ type: 'text' as const, text: `Error: Invalid version: ${versionValidation.error}` }],
+          content: [
+            {
+              type: 'text' as const,
+              text: `Error: Invalid version: ${versionValidation.error}`,
+            },
+          ],
           isError: true,
         };
       }
