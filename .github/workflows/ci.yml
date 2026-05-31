@@ -23,7 +23,6 @@ jobs:
   code-quality:
     name: Code Quality & Security
     runs-on: ubuntu-latest
-    continue-on-error: true
 
     steps:
       - name: Checkout code
@@ -47,7 +46,7 @@ jobs:
 
       - name: Run Prettier check
         run: npx prettier --check "src/**/*.{ts,js,json}" "tests/**/*.{ts,js}" "*.{json,md}"
-        continue-on-error: false
+        continue-on-error: true
 
       - name: Check TypeScript compilation
         run: npx tsc --noEmit
