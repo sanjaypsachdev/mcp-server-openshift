@@ -34,7 +34,7 @@
     {
       "registryType": "oci",
       "identifier": "docker.io/sanjaypsachdev/mcp-server-openshift:0.0.0",
-      "runtimeHint": "docker",
+      "runtimeHint": "podman",
       "transport": {
         "type": "stdio"
       },

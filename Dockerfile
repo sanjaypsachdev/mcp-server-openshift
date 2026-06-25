@@ -7,14 +7,17 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install all dependencies (dev deps needed for tsc); skip prepare until sources are copied
+RUN npm ci --ignore-scripts
 
 # Copy source code
 COPY . .
 
 # Build the project
 RUN npm run build
+
+# Remove dev dependencies before copying to production image
+RUN npm prune --omit=dev
 
 # Production stage
 FROM node:18-alpine AS production
