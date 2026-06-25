@@ -109,6 +109,9 @@ Thumbs.db
 dist/
 build/
 
+# MCP Registry publish artifact (generated locally; do not commit)
+server.publish.json
+
 # Test output
 test-results/
 coverage/
