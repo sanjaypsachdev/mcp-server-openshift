@@ -1,6 +1,7 @@
 {
   "name": "mcp-server-openshift",
-  "version": "1.1.0",
+  "version": "1.2.0",
+  "mcpName": "io.github.sanjaypsachdev/mcp-server-openshift",
   "description": "MCP server for OpenShift operations and management with comprehensive tools for cluster management, application deployment, and secure route creation",
   "main": "dist/index.js",
   "bin": {
