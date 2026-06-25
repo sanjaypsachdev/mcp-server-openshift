@@ -40,25 +40,16 @@ COPY --from=builder --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --from=builder --chown=nodejs:nodejs /app/package*.json ./
 COPY --from=builder --chown=nodejs:nodejs /app/manifest.json ./
 
-# Expose port for HTTP transport
+# Expose port for optional HTTP transport (pass --http --port=3000 to CMD)
 EXPOSE 3000
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD node -e "const http = require('http'); http.get('http://localhost:3000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }).on('error', () => process.exit(1));"
-
-# Default to HTTP transport for container deployment
-ENV MCP_TRANSPORT=sse
-ENV MCP_PORT=3000
-ENV MCP_HOST=0.0.0.0
-
-# Start the server
-CMD ["node", "dist/index.js", "--http", "--port=3000"]
+# Default to stdio transport for MCP clients; use --http --port=3000 for HTTP/SSE mode
+CMD ["node", "dist/index.js"]
 
 # Labels for better maintainability
 LABEL maintainer="sanjaypsachdev@gmail.com"
 LABEL description="OpenShift MCP Server - AI-powered container orchestration"
-LABEL version="1.0.0"
 LABEL org.opencontainers.image.source="https://github.com/sanjaypsachdev/mcp-server-openshift"
 LABEL org.opencontainers.image.description="Model Context Protocol server for OpenShift/Kubernetes management"
 LABEL org.opencontainers.image.licenses="MIT"
+LABEL io.modelcontextprotocol.server.name="io.github.sanjaypsachdev/mcp-server-openshift"
