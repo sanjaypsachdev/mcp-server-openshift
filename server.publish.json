@@ -7,14 +7,14 @@
     "url": "https://github.com/sanjaypsachdev/mcp-server-openshift",
     "source": "github"
   },
-  "version": "0.0.0",
+  "version": "1.2.0",
   "websiteUrl": "https://github.com/sanjaypsachdev/mcp-server-openshift#readme",
   "packages": [
     {
       "registryType": "npm",
       "registryBaseUrl": "https://registry.npmjs.org",
       "identifier": "mcp-server-openshift",
-      "version": "0.0.0",
+      "version": "1.2.0",
       "runtimeHint": "npx",
       "transport": {
         "type": "stdio"
@@ -33,7 +33,7 @@
     },
     {
       "registryType": "oci",
-      "identifier": "docker.io/sanjaypsachdev/mcp-server-openshift:0.0.0",
+      "identifier": "docker.io/sanjaypsachdev/mcp-server-openshift:1.2.0",
       "runtimeHint": "podman",
       "transport": {
         "type": "stdio"
