@@ -35,7 +35,7 @@ npm run lint:fix       # eslint src/ --fix
 
 `src/index.ts` is the single entry point. It creates `OpenShiftMCPServer`, which wires together all four MCP capability types:
 
-- **Tools** — 14 `oc_*` tools, each in `src/tools/oc-*.ts`
+- **Tools** — 14 `oc_*` tools registered in `index.ts`, each in `src/tools/oc-*.ts`
 - **Resources** — 3 static read-only resources in `src/resources/`
   - `openshift://cluster-info`, `openshift://project-list`, `openshift://app-templates`
 - **Prompts** — 2 prompt templates in `src/prompts/`
@@ -43,13 +43,21 @@ npm run lint:fix       # eslint src/ --fix
 
 Transport is auto-detected: stdio by default; HTTP/SSE when `--http`, `--sse`, `--port=N`, or `MCP_TRANSPORT=sse/http` is set.
 
+Runtime environment variables: `OPENSHIFT_CONTEXT`, `OPENSHIFT_NAMESPACE` (cluster defaults), `MCP_TRANSPORT`, `MCP_PORT`, `MCP_HOST` (server config).
+
+**Note**: `src/tools/oc-status.ts` exists as a reference implementation showing the full tool utility pattern but is intentionally **not registered** in `index.ts`.
+
 ### Tool pattern
 
 Every tool file exports two things:
 1. A `Tool` object (the MCP tool definition with `name`, `description`, `inputSchema`)
 2. A `handle*` async function that takes typed args and returns an MCP `content` response
 
-Input validation uses **Zod schemas** defined in `src/models/tool-models.ts`. All schemas and their inferred TypeScript types live there; individual tool files import from it.
+Input validation uses **Zod schemas** defined in `src/models/tool-models.ts`. All schemas and their inferred TypeScript types live there; individual tool files import from it. `OcRolloutSchema` and `OcStartBuildSchema` are defined there but have no corresponding tool files yet — stubs for planned tools.
+
+**Adding a new tool** requires changes in two places in `index.ts`: the import at the top, and a new `case` in the `switch` inside `setupToolHandlers`. The tool definition also needs to be added to the `tools` array in `ListToolsRequestSchema` handler.
+
+`src/types.ts` holds domain types (`OpenShiftResource`, `DeploymentConfig`, `Route`, `BuildConfig`, `OpenShiftCommandResult`, etc.) used across tool handlers.
 
 ### Utility layer (`src/utils/`)
 
