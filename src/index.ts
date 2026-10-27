@@ -63,7 +63,6 @@ class OpenShiftMCPServer {
           tools: {},
           resources: {},
           prompts: {},
-          sampling: {},
         },
       }
     );
@@ -327,8 +326,15 @@ class OpenShiftMCPServer {
       try {
         // Look for sampling requests in the messages
         for (const message of messages) {
-          if (message.content.type === 'text') {
-            const text = message.content.text;
+          const contentBlocks = Array.isArray(message.content)
+            ? message.content
+            : [message.content];
+
+          for (const content of contentBlocks) {
+            if (content.type !== 'text') {
+              continue;
+            }
+            const text = content.text;
 
             // Check if this is a pod logs sampling request
             const podLogsMatch = text.match(
@@ -483,8 +489,11 @@ To sample pod logs, please specify:
 
       // Handle SSE endpoint
       if (req.url === '/sse') {
-        // Create SSE transport for this request
-        const transport = new SSEServerTransport('/sse', res);
+        // Create SSE transport for this request with DNS rebinding protection
+        const transport = new SSEServerTransport('/sse', res, {
+          enableDnsRebindingProtection: true,
+          allowedHosts: [host, 'localhost', '127.0.0.1'],
+        });
         this.server.connect(transport).catch(error => {
           console.error('Failed to connect SSE transport:', error);
         });
