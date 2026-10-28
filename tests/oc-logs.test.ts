@@ -195,6 +195,10 @@ describe('oc-logs tool', () => {
       expect(result.content[0].text).toContain('Logs Retrieved Successfully');
       expect(result.content[0].text).toContain('Log line 1');
       expect(result.content[0].text).toContain('**Total Lines**: 3');
+      expect(mockManager.executeCommand).toHaveBeenCalledWith(
+        expect.arrayContaining(['logs', 'pod/test-pod', '-n', 'test']),
+        expect.any(Object)
+      );
     });
 
     it('should handle multi-container pod requiring container selection', async () => {
@@ -633,9 +637,10 @@ describe('oc-logs tool', () => {
       const result = await handleOcLogs(params);
 
       expect(result.content).toBeDefined();
-      expect(result.content[0].text).toContain('Logs Retrieved Successfully');
-      expect(result.content[0].text).toContain('Errors Encountered');
+      expect(result.content[0].text).toContain('Log Retrieval Failed');
+      expect(result.content[0].text).toContain('Log command failed');
       expect(result.content[0].text).toContain('container "main" in pod "test-pod" is not running');
+      expect(result.content[0].text).not.toContain('Logs Retrieved Successfully');
     });
 
     it('should handle follow mode indication', async () => {

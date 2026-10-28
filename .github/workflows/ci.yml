@@ -15,7 +15,7 @@ permissions:
   checks: write
 
 env:
-  NODE_VERSION: '18'
+  NODE_VERSION: '20'
   CACHE_KEY_PREFIX: 'node-cache-v1'
 
 jobs:
@@ -63,7 +63,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18, 20, 21]
+        node-version: [20, 22]
 
     steps:
       - name: Checkout code
@@ -88,7 +88,7 @@ jobs:
         continue-on-error: true
 
       - name: Upload coverage to Codecov
-        if: matrix.node-version == 18
+        if: matrix.node-version == 20
         uses: codecov/codecov-action@v5
         with:
           file: ./coverage/lcov.info

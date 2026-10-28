@@ -154,6 +154,12 @@ export async function handleOcLogs(params: OcLogsParams) {
 
     // Process and format results
     const processedLogs = processLogResults(logResults, validated);
+    if (processedLogs.hasErrors && processedLogs.totalLines === 0) {
+      const details = processedLogs.errors.join('\n');
+      addProgress(`❌ Log command failed: ${details}`, 'ERROR');
+      return formatErrorResponse(progressLog, 'Log command failed', details);
+    }
+
     addProgress(
       `✅ Retrieved ${processedLogs.totalLines} lines from ${processedLogs.sources.length} source(s)`,
       'SUCCESS'
@@ -356,7 +362,7 @@ function buildLogsCommands(params: OcLogsParams, resourceInfo: any): LogCommand[
     if (params.allContainers && resourceInfo.containers?.length > 1) {
       // Create command for each container
       resourceInfo.containers.forEach((container: string) => {
-        const args = ['logs', params.resourceType, params.name];
+        const args = ['logs', `${params.resourceType}/${params.name}`];
 
         if (params.namespace) {
           args.push('-n', params.namespace);
@@ -373,7 +379,7 @@ function buildLogsCommands(params: OcLogsParams, resourceInfo: any): LogCommand[
       });
     } else {
       // Single command
-      const args = ['logs', params.resourceType, params.name];
+      const args = ['logs', `${params.resourceType}/${params.name}`];
 
       if (params.namespace) {
         args.push('-n', params.namespace);

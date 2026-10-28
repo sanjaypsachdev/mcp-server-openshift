@@ -10,7 +10,6 @@ import {
   ReadResourceRequestSchema,
   ListPromptsRequestSchema,
   GetPromptRequestSchema,
-  CreateMessageRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 
 // Import tools
@@ -45,9 +44,6 @@ import {
   generateMonitoringPrompts,
 } from './prompts/monitoring-prompts.js';
 
-// Import sampling
-import { samplePodLogs, type PodLogsSamplingRequest } from './sampling/pod-logs.js';
-
 class OpenShiftMCPServer {
   private server: Server;
   private openShiftManager: OpenShiftManager;
@@ -63,7 +59,6 @@ class OpenShiftMCPServer {
           tools: {},
           resources: {},
           prompts: {},
-          sampling: {},
         },
       }
     );
@@ -72,7 +67,6 @@ class OpenShiftMCPServer {
     this.setupToolHandlers();
     this.setupResourceHandlers();
     this.setupPromptHandlers();
-    this.setupSamplingHandlers();
     this.setupErrorHandling();
   }
 
@@ -319,101 +313,6 @@ class OpenShiftMCPServer {
     });
   }
 
-  private setupSamplingHandlers() {
-    // Handle sampling requests
-    this.server.setRequestHandler(CreateMessageRequestSchema, async request => {
-      const { messages } = request.params;
-
-      try {
-        // Look for sampling requests in the messages
-        for (const message of messages) {
-          if (message.content.type === 'text') {
-            const text = message.content.text;
-
-            // Check if this is a pod logs sampling request
-            const podLogsMatch = text.match(
-              /sample pod logs for (\S+) in namespace (\S+)(?:\s+container (\S+))?(?:\s+since (\S+))?(?:\s+lines (\d+))?/i
-            );
-
-            if (podLogsMatch) {
-              const [, podName, namespace, containerName, since, maxLines] = podLogsMatch;
-
-              const samplingRequest: PodLogsSamplingRequest = {
-                podName,
-                namespace,
-                containerName,
-                maxLines: maxLines ? parseInt(maxLines) : 100,
-                since: since || '1h',
-                includePrevious: true,
-              };
-
-              const logSample = await samplePodLogs(samplingRequest);
-
-              return {
-                model: 'openshift-pod-logs-sampler',
-                role: 'assistant' as const,
-                content: {
-                  type: 'text' as const,
-                  text: logSample,
-                },
-              };
-            }
-
-            // Generic pod logs sampling (fallback)
-            if (
-              text.toLowerCase().includes('sample pod logs') ||
-              text.toLowerCase().includes('analyze pod logs')
-            ) {
-              return {
-                model: 'openshift-pod-logs-sampler',
-                role: 'assistant' as const,
-                content: {
-                  type: 'text' as const,
-                  text: `# Pod Logs Sampling
-
-To sample pod logs, please specify:
-- Pod name
-- Namespace
-- Container name (optional)
-- Time range (optional, default: 1h)
-- Max lines (optional, default: 100)
-
-**Example**: "Sample pod logs for my-pod-12345 in namespace my-app container web-server since 30m lines 50"
-
-**Available sampling options**:
-- \`since\`: 5m, 30m, 1h, 2h, 1d
-- \`lines\`: Number of log lines to sample (1-1000)
-- \`container\`: Specific container name for multi-container pods
-`,
-                },
-              };
-            }
-          }
-        }
-
-        // If no sampling pattern matches, return default response
-        return {
-          model: 'openshift-sampler',
-          role: 'assistant' as const,
-          content: {
-            type: 'text' as const,
-            text: 'I can help sample OpenShift resources for analysis. Try asking me to "sample pod logs" with specific pod details.',
-          },
-        };
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        return {
-          model: 'openshift-sampler',
-          role: 'assistant' as const,
-          content: {
-            type: 'text' as const,
-            text: `Error in sampling: ${errorMessage}`,
-          },
-        };
-      }
-    });
-  }
-
   private setupErrorHandling() {
     this.server.onerror = error => {
       console.error('[MCP Error]', error);
@@ -483,8 +382,20 @@ To sample pod logs, please specify:
 
       // Handle SSE endpoint
       if (req.url === '/sse') {
-        // Create SSE transport for this request
-        const transport = new SSEServerTransport('/sse', res);
+        // host is defined in startHttpServer (MCP_HOST / 'localhost') and closed over here.
+        // Also allow the request Host header so DNS rebinding checks match the client URL.
+        const requestHost = req.headers.host?.split(':')[0];
+        const allowedHosts = Array.from(
+          new Set(
+            [host, 'localhost', '127.0.0.1', '0.0.0.0', requestHost].filter(
+              (value): value is string => Boolean(value)
+            )
+          )
+        );
+        const transport = new SSEServerTransport('/sse', res, {
+          enableDnsRebindingProtection: true,
+          allowedHosts,
+        });
         this.server.connect(transport).catch(error => {
           console.error('Failed to connect SSE transport:', error);
         });

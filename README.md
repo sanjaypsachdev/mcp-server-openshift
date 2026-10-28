@@ -3,7 +3,7 @@
 [![CI Pipeline](https://github.com/sanjaypsachdev/mcp-server-openshift/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/sanjaypsachdev/mcp-server-openshift/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/sanjaypsachdev/mcp-server-openshift/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/sanjaypsachdev/mcp-server-openshift/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen.svg)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.5.0-blue.svg)](https://www.typescriptlang.org/)
 [![OpenShift](https://img.shields.io/badge/OpenShift-4.x-red.svg)](https://www.redhat.com/en/technologies/cloud-computing/openshift)
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-1.25%2B-blue.svg)](https://kubernetes.io/)
@@ -43,7 +43,7 @@ https://github.com/user-attachments/assets/f4bace3f-755b-462f-8a8a-680e4dc02129
 
 ## Prerequisites
 
-- Node.js 18+
+- Node.js 20+
 - OpenShift CLI (`oc`) installed and configured
 - Access to an OpenShift cluster
 
